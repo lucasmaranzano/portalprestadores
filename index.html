@@ -23,6 +23,10 @@
     --amber-lt: #FAEEDA;
     --red:      #993C1D;
     --red-lt:   #FAECE7;
+    --purple:   #5B21B6;
+    --purple-lt:#EDE9FE;
+    --teal:     #0E7490;
+    --teal-lt:  #ECFEFF;
     --radius:   8px;
     --radius-lg:12px;
   }
@@ -35,66 +39,69 @@
   .screen { display: none; }
   .screen.active { display: block; }
 
-  /* LOGIN */
+  /* ── LOGIN ───────────────────────────────────────────── */
   .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
   .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px; }
   .logo-area { text-align: center; margin-bottom: 1.75rem; }
-  .logo-sq { width: 48px; height: 48px; border-radius: var(--radius); background: var(--blue-lt); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--blue); margin-bottom: .75rem; }
-  .login-title { font-size: 18px; font-weight: 600; }
+  .logo-sq { width: 48px; height: 48px; border-radius: var(--radius); background: var(--blue-lt); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--blue); margin-bottom: .75rem; }
+  .login-title { font-size: 18px; font-weight: 700; }
   .login-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
   .field { margin-bottom: 1rem; }
-  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
   .field input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; color: var(--text); background: var(--surface); outline: none; }
   .field input:focus { border-color: var(--blue); }
-  .btn-login { width: 100%; padding: 10px; border: none; border-radius: var(--radius); background: var(--blue); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: .25rem; }
+  .btn-login { width: 100%; padding: 10px; border: none; border-radius: var(--radius); background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: .25rem; }
   .btn-login:hover { background: var(--blue-dk); }
   .btn-login:disabled { opacity: .6; cursor: not-allowed; }
   .login-error { font-size: 12px; color: var(--red); margin-top: .625rem; text-align: center; display: none; }
 
-  /* TOPBAR */
+  /* ── TOPBAR ──────────────────────────────────────────── */
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; height: 54px; position: sticky; top: 0; z-index: 10; }
   .tb-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-lt); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--blue); flex-shrink: 0; }
-  .tb-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-lt); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--blue); flex-shrink: 0; }
+  .tb-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .tb-cuit { font-size: 11px; color: var(--muted); }
   .btn-logout { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; padding: 5px 10px; border-radius: var(--radius); white-space: nowrap; flex-shrink: 0; }
   .btn-logout:hover { background: var(--bg); }
 
-  /* MAIN */
+  /* ── MAIN ────────────────────────────────────────────── */
   .main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
   .tabs { display: flex; gap: 3px; margin-bottom: 1.25rem; background: var(--border); border-radius: var(--radius); padding: 3px; width: fit-content; }
-  .tab { padding: 6px 18px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; color: var(--muted); border: none; background: none; }
+  .tab { padding: 6px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; color: var(--muted); border: none; background: none; white-space: nowrap; }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
   .panel { display: none; }
   .panel.active { display: block; }
 
-  /* SUMMARY */
-  .summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
-  .scard { background: var(--bg); border-radius: var(--radius); padding: .875rem; }
-  .scard-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .scard-value { font-size: 20px; font-weight: 600; color: var(--text); }
-  .scard-value.green { color: var(--green); }
-  .scard-value.amber { color: var(--amber); }
+  /* ── METRIC CARDS ────────────────────────────────────── */
+  .metrics { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .mc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; }
+  .mc-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  .mc-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .mc-value.green  { color: var(--green); }
+  .mc-value.amber  { color: var(--amber); }
+  .mc-value.blue   { color: var(--blue); }
+  .mc-value.purple { color: var(--purple); }
+  .mc-value.red    { color: var(--red); }
+  .mc-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* FILTERS */
+  /* ── FILTERS ─────────────────────────────────────────── */
   .filters { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
   .filters select, .filters input { font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); outline: none; }
   .filters select:focus, .filters input:focus { border-color: var(--blue); }
   .filters select { min-width: 150px; }
   .filters input { flex: 1; min-width: 160px; }
 
-  /* TABLE */
+  /* ── TABLE ───────────────────────────────────────────── */
   .tbl-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th { background: var(--bg); padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+  thead th { background: var(--bg); padding: 9px 12px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
   tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover td { background: #fafaf8; }
-  .aff-name { font-weight: 500; }
+  .aff-name { font-weight: 600; }
   .aff-cuil { font-size: 11px; color: var(--muted); }
-  .monto { font-weight: 600; }
-  .imp-sub { font-weight: 600; color: var(--green); }
-  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .monto { font-weight: 700; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
   .badge-pagado    { background: var(--green-lt); color: var(--green); }
   .badge-pendiente { background: var(--amber-lt); color: var(--amber); }
   .badge-nc        { background: var(--red-lt);   color: var(--red); }
@@ -103,14 +110,14 @@
   .btn-pdf:disabled { color: var(--hint); cursor: wait; text-decoration: none; }
   .no-rows { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 13px; }
 
-  /* PDF MODAL */
+  /* ── PDF MODAL ───────────────────────────────────────── */
   .pdf-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); align-items: center; justify-content: center; padding: 1rem; }
   .pdf-overlay.open { display: flex; }
   .pdf-modal { background: var(--surface); border-radius: var(--radius-lg); width: 100%; max-width: 900px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); }
   .pdf-header { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 8px; }
-  .pdf-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pdf-title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pdf-actions { display: flex; gap: 8px; flex-shrink: 0; }
-  .btn-dl { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--radius); border: none; background: var(--blue); color: #fff; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+  .btn-dl { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--radius); border: none; background: var(--blue); color: #fff; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
   .btn-dl:hover { background: var(--blue-dk); }
   .btn-close-pdf { font-size: 12px; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border2); background: none; color: var(--muted); cursor: pointer; }
   .btn-close-pdf:hover { background: var(--bg); }
@@ -119,12 +126,51 @@
   .pdf-loading-screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; color: #ddd; font-size: 13px; }
   .pdf-loading-screen .spinner { border-color: rgba(255,255,255,.25); border-top-color: #fff; }
 
-  @media (max-width: 600px) {
-    .summary { grid-template-columns: repeat(2, 1fr); }
-    .scard-value { font-size: 17px; }
+  /* ── AUTORIZADOS CARDS ───────────────────────────────── */
+  .auth-filter { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text); background: var(--surface); outline: none; margin-bottom: 1rem; }
+  .auth-filter:focus { border-color: var(--blue); }
+  .auth-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; }
+  .auth-summary-txt { font-size: 13px; color: var(--muted); }
+  .auth-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .auth-count-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; border: 1.5px solid; }
+  .auth-grid { display: flex; flex-direction: column; gap: 10px; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.25rem; transition: border-color .15s, transform .15s; }
+  .auth-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .auth-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .auth-afiliado { font-size: 16px; font-weight: 700; color: var(--text); }
+  .auth-cuil { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .auth-divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .auth-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 24px; }
+  .auth-field-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .auth-field-value { font-size: 14px; color: var(--text); }
+  .auth-obs-wrap { position: relative; border-radius: var(--radius); overflow: hidden; min-height: 72px; background: var(--bg); margin-top: 4px; }
+  .auth-obs-blur { filter: blur(4px); opacity: .3; pointer-events: none; padding: 10px; }
+  .auth-obs-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .auth-obs-icon { font-size: 20px; }
+  .auth-obs-label { font-size: 13px; font-weight: 700; color: var(--amber); }
+  .auth-bono { display: flex; align-items: center; gap: 8px; background: var(--teal-lt); border: 1px solid #A5F3FC; border-radius: var(--radius); padding: 8px 12px; margin-top: 10px; font-size: 12px; color: var(--teal); }
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 5px 12px; border-radius: 99px; border: 1.5px solid; white-space: nowrap; flex-shrink: 0; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .s-autorizado { color: var(--green); border-color: rgba(15,110,86,.3); background: var(--green-lt); }
+  .s-autorizado .status-dot { background: var(--green); }
+  .s-pendiente { color: var(--amber); border-color: rgba(133,79,11,.3); background: var(--amber-lt); }
+  .s-pendiente .status-dot { background: var(--amber); }
+  .s-rechazado { color: var(--red); border-color: rgba(153,60,29,.3); background: var(--red-lt); }
+  .s-rechazado .status-dot { background: var(--red); }
+  .s-otro { color: var(--purple); border-color: rgba(91,33,182,.3); background: var(--purple-lt); }
+  .s-otro .status-dot { background: var(--purple); }
+  .auth-loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
+  .auth-empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
+
+  /* ── MOBILE ──────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .mc:first-child { grid-column: 1 / -1; }
+    .mc-value { font-size: 18px; }
     .tb-name { max-width: 160px; }
-    .tab { padding: 6px 12px; font-size: 12px; }
+    .tab { padding: 6px 10px; font-size: 12px; }
     .pdf-modal { height: 95vh; border-radius: var(--radius); }
+    .auth-card-top { flex-direction: column; }
   }
 </style>
 </head>
@@ -165,16 +211,41 @@
   <div class="main">
     <div class="tabs">
       <button class="tab active" onclick="swTab('pres',this)">Presentaciones</button>
-      <button class="tab"        onclick="swTab('pagos',this)">Pagos</button>
+      <button class="tab"        onclick="swTab('aut',this)" id="tab-aut">Afiliados autorizados</button>
     </div>
 
-    <!-- PRESENTACIONES -->
+    <!-- ── PRESENTACIONES ── -->
     <div class="panel active" id="panel-pres">
-      <div class="summary">
-        <div class="scard"><div class="scard-label">Total presentado</div><div class="scard-value" id="s-total">—</div></div>
-        <div class="scard"><div class="scard-label">Pagadas</div><div class="scard-value green" id="s-pag">—</div></div>
-        <div class="scard"><div class="scard-label">Pendientes</div><div class="scard-value amber" id="s-pend">—</div></div>
+      <!-- Métricas -->
+      <div class="metrics">
+        <div class="mc">
+          <div class="mc-label">Total presentado</div>
+          <div class="mc-value blue" id="m-pres-total">—</div>
+          <div class="mc-sub" id="m-pres-cant">— facturas</div>
+        </div>
+        <div class="mc">
+          <div class="mc-label">Total pagado</div>
+          <div class="mc-value green" id="m-pag-total">—</div>
+          <div class="mc-sub" id="m-pag-cant">— facturas pagadas</div>
+        </div>
+        <div class="mc">
+          <div class="mc-label">Pendiente de cobro</div>
+          <div class="mc-value amber" id="m-pend-total">—</div>
+          <div class="mc-sub" id="m-pend-cant">— facturas pendientes</div>
+        </div>
+        <div class="mc">
+          <div class="mc-label">Facturas presentadas</div>
+          <div class="mc-value" id="m-cant-pres">—</div>
+          <div class="mc-sub">total de comprobantes</div>
+        </div>
+        <div class="mc">
+          <div class="mc-label">Notas de crédito</div>
+          <div class="mc-value red" id="m-nc">—</div>
+          <div class="mc-sub">según OS</div>
+        </div>
       </div>
+
+      <!-- Filtros -->
       <div class="filters">
         <select id="f-periodo" onchange="renderPres()"><option value="">Todos los períodos</option></select>
         <select id="f-estado" onchange="renderPres()">
@@ -185,32 +256,31 @@
         </select>
         <input type="text" id="f-q" placeholder="Buscar por afiliado o CUIL…" oninput="renderPres()">
       </div>
+
+      <!-- Tabla -->
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>Afiliado</th><th>Obra social</th><th>Período prest.</th>
-            <th>Nro. comp.</th><th>Monto</th><th>Estado</th><th>Comprobante</th>
+            <th>Afiliado</th>
+            <th>Obra social</th>
+            <th>Período prest.</th>
+            <th>Nro. comp.</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Comprobante</th>
           </tr></thead>
           <tbody id="tbody-pres"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- PAGOS -->
-    <div class="panel" id="panel-pagos">
-      <div class="summary">
-        <div class="scard"><div class="scard-label">Total subsidiado</div><div class="scard-value green" id="p-sub">—</div></div>
-        <div class="scard"><div class="scard-label">Liquidaciones</div><div class="scard-value" id="p-reg">—</div></div>
-        <div class="scard"><div class="scard-label">Último período</div><div class="scard-value" id="p-ult">—</div></div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            <th>Afiliado</th><th>Obra social</th><th>Presentación</th>
-            <th>Prestación</th><th>Imp. facturado</th><th>Imp. subsidiado</th><th>Nro. comp.</th>
-          </tr></thead>
-          <tbody id="tbody-pagos"></tbody>
-        </table>
+    <!-- ── AFILIADOS AUTORIZADOS ── -->
+    <div class="panel" id="panel-aut">
+      <div id="aut-content">
+        <div class="auth-loading">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          Cargando afiliados autorizados…
+        </div>
       </div>
     </div>
   </div>
@@ -242,10 +312,12 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFeSqQWR2A-QKySZSc8cHF
 let session    = null;
 let presData   = [];
 let pagosData  = [];
+let autData    = null;   // null = no cargado aún, [] = vacío, [...] = datos
 let pdfBlobUrl = null;
 
 const fmt  = n => (parseFloat(n)||0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
 const fmtP = p => { const s=String(p||''); return s.length===6 ? s.slice(0,4)+'/'+s.slice(4) : s; };
+const esc  = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $    = id => document.getElementById(id);
 const spin = v  => $('spinner').classList.toggle('hidden', !v);
 
@@ -254,14 +326,24 @@ async function gasGet(params) {
   return res.json();
 }
 
+// ── BADGES ────────────────────────────────────────────────
 function badge(estado) {
   const e = String(estado||'').trim().toLowerCase();
   if (e==='pagado')       return `<span class="badge badge-pagado">Pagado</span>`;
   if (e==='pendiente')    return `<span class="badge badge-pendiente">Pendiente</span>`;
   if (e.includes('nota')) return `<span class="badge badge-nc">Nota de crédito</span>`;
-  return `<span class="badge badge-pendiente">${estado}</span>`;
+  return `<span class="badge badge-pendiente">${esc(estado)}</span>`;
 }
 
+function claseEstado(e) {
+  const s = String(e||'').toLowerCase();
+  if (s.includes('autoriz'))  return 's-autorizado';
+  if (s.includes('observ') || s.includes('pendiente') || s.includes('proceso')) return 's-pendiente';
+  if (s.includes('rechaz'))   return 's-rechazado';
+  return 's-otro';
+}
+
+// ── LOGIN ──────────────────────────────────────────────────
 async function doLogin() {
   const u = $('inp-u').value.trim();
   const p = $('inp-p').value.trim();
@@ -287,12 +369,17 @@ async function doLogin() {
 }
 
 function doLogout() {
-  session = null; presData = []; pagosData = [];
+  session = null; presData = []; pagosData = []; autData = null;
   if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); pdfBlobUrl = null; }
   sessionStorage.removeItem('ps_session');
   $('s-portal').classList.remove('active');
   $('s-login').classList.add('active');
   $('inp-p').value = '';
+  // reset tab a Presentaciones
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  $('panel-pres').classList.add('active');
 }
 
 function mostrarPortal() {
@@ -311,19 +398,47 @@ async function cargarDatos() {
     if (res.ok) {
       presData  = res.presentaciones || [];
       pagosData = res.pagos          || [];
-      poblarPeriodos(); renderPres(); renderPagos();
+      calcularMetricas();
+      poblarPeriodos();
+      renderPres();
     } else { alert('Error al cargar datos: ' + (res.error||'desconocido')); }
   } catch(e) { alert('Error de conexión al cargar datos.'); }
   spin(false);
 }
 
+// ── TABS ───────────────────────────────────────────────────
 function swTab(name, btn) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   $('panel-'+name).classList.add('active');
+  if (name === 'aut' && autData === null) cargarAutorizados();
 }
 
+// ── MÉTRICAS ──────────────────────────────────────────────
+function calcularMetricas() {
+  const totalPresM = presData.reduce((s,r)=>s+(parseFloat(r.monto)||0), 0);
+  const cantPres   = presData.length;
+  const cantPag    = presData.filter(r=>String(r.estado).toLowerCase()==='pagado').length;
+  const cantPend   = presData.filter(r=>String(r.estado).toLowerCase()==='pendiente').length;
+  const cantNC     = presData.filter(r=>String(r.estadoOS||'').toUpperCase().includes('NOTA')).length;
+
+  // total pagado viene de PAGOS (importe subsidiado)
+  const totalPagM  = pagosData.reduce((s,r)=>s+(parseFloat(r.impSub)||0), 0);
+  // pendiente = presentado - pagado (en $)
+  const totalPendM = totalPresM - totalPagM;
+
+  $('m-pres-total').textContent = fmt(totalPresM);
+  $('m-pres-cant').textContent  = cantPres + ' factura' + (cantPres!==1?'s':'');
+  $('m-pag-total').textContent  = fmt(totalPagM);
+  $('m-pag-cant').textContent   = cantPag + ' factura' + (cantPag!==1?'s':'')+' pagada'+(cantPag!==1?'s':'');
+  $('m-pend-total').textContent = fmt(Math.max(0, totalPendM));
+  $('m-pend-cant').textContent  = cantPend + ' factura' + (cantPend!==1?'s':'')+' pendiente'+(cantPend!==1?'s':'');
+  $('m-cant-pres').textContent  = cantPres;
+  $('m-nc').textContent         = cantNC;
+}
+
+// ── PRESENTACIONES ────────────────────────────────────────
 function poblarPeriodos() {
   const sel  = $('f-periodo');
   const pers = [...new Set(presData.map(r=>r.periodo))].sort().reverse();
@@ -340,17 +455,13 @@ function renderPres() {
   if (est) rows = rows.filter(r => String(r.estado).toLowerCase() === est.toLowerCase());
   if (q)   rows = rows.filter(r => String(r.afiliado).toLowerCase().includes(q) || String(r.cuil).includes(q));
 
-  $('s-total').textContent = fmt(rows.reduce((s,r)=>s+(parseFloat(r.monto)||0),0));
-  $('s-pag').textContent   = rows.filter(r=>String(r.estado).toLowerCase()==='pagado').length;
-  $('s-pend').textContent  = rows.filter(r=>String(r.estado).toLowerCase()==='pendiente').length;
-
   const tb = $('tbody-pres');
   if (!rows.length) { tb.innerHTML='<tr><td colspan="7" class="no-rows">Sin resultados para los filtros seleccionados</td></tr>'; return; }
   tb.innerHTML = rows.map(r => `<tr>
-    <td><div class="aff-name">${r.afiliado||'—'}</div><div class="aff-cuil">${r.cuil||''}</div></td>
-    <td>${r.os||'—'}</td>
+    <td><div class="aff-name">${esc(r.afiliado)||'—'}</div><div class="aff-cuil">${esc(r.cuil)}</div></td>
+    <td>${esc(r.os)||'—'}</td>
     <td>${fmtP(r.periPrest)}</td>
-    <td>${r.nroComp||'—'}</td>
+    <td>${esc(r.nroComp)||'—'}</td>
     <td class="monto">${fmt(r.monto)}</td>
     <td>${badge(r.estado)}</td>
     <td>${String(r.estado).toLowerCase()==='pagado'
@@ -360,34 +471,106 @@ function renderPres() {
   </tr>`).join('');
 }
 
-function renderPagos() {
-  const rows = pagosData;
-  $('p-sub').textContent = fmt(rows.reduce((s,r)=>s+(parseFloat(r.impSub)||0),0));
-  $('p-reg').textContent = rows.length;
-  const pers = rows.map(r=>r.pres).sort().reverse();
-  $('p-ult').textContent = pers.length ? fmtP(pers[0]) : '—';
-  const tb = $('tbody-pagos');
-  if (!rows.length) { tb.innerHTML='<tr><td colspan="7" class="no-rows">Sin pagos registrados</td></tr>'; return; }
-  tb.innerHTML = rows.map(r => `<tr>
-    <td><div class="aff-name">${r.afiliado||'—'}</div><div class="aff-cuil">${r.cuil||''}</div></td>
-    <td>${r.os||'—'}</td>
-    <td>${fmtP(r.pres)}</td>
-    <td>${fmtP(r.prest)}</td>
-    <td>${fmt(r.impFac)}</td>
-    <td class="imp-sub">${fmt(r.impSub)}</td>
-    <td>${r.nroComp||'—'}</td>
-  </tr>`).join('');
+// ── AFILIADOS AUTORIZADOS ─────────────────────────────────
+async function cargarAutorizados() {
+  $('aut-content').innerHTML = `<div class="auth-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Cargando afiliados autorizados…</div>`;
+  try {
+    const res = await gasGet({action:'autorizados', cuit:session.cuit, t:session.token});
+    if (res.ok) {
+      autData = res.autorizados || [];
+      renderAutorizados('');
+    } else {
+      $('aut-content').innerHTML = `<div class="auth-empty" style="color:var(--red)">Error al cargar: ${esc(res.error||'desconocido')}</div>`;
+    }
+  } catch(e) {
+    $('aut-content').innerHTML = `<div class="auth-empty" style="color:var(--red)">Error de conexión.</div>`;
+  }
 }
 
+function renderAutorizados(q) {
+  if (!autData || !autData.length) {
+    $('aut-content').innerHTML = `<div class="auth-empty">No hay afiliados autorizados registrados para tu CUIT.</div>`;
+    return;
+  }
+
+  const txt = (q||'').toLowerCase();
+  let rows  = txt
+    ? autData.filter(r => String(r['afiliado']||'').toLowerCase().includes(txt) || String(r['ESTADO']||'').toLowerCase().includes(txt))
+    : autData;
+
+  // Ordenar: autorizados primero, luego observados, resto
+  rows = [...rows].sort((a,b) => {
+    const ea = String(a['ESTADO']||'').toLowerCase();
+    const eb = String(b['ESTADO']||'').toLowerCase();
+    const prio = e => e.includes('autoriz')?0:e.includes('observ')?2:1;
+    const d = prio(ea)-prio(eb);
+    return d!==0?d:String(a['afiliado']||'').localeCompare(String(b['afiliado']||''),'es');
+  });
+
+  // Conteo por estado
+  const conteo = new Map();
+  autData.forEach(r => {
+    const e = String(r['ESTADO']||'Sin estado').trim();
+    conteo.set(e, (conteo.get(e)||0)+1);
+  });
+  const badgesHTML = [...conteo].map(([e,n])=>{
+    const cls = claseEstado(e);
+    return `<span class="auth-count-badge ${cls}">${esc(e.toUpperCase())}: ${n}</span>`;
+  }).join('');
+
+  const cards = rows.map(r => {
+    const estado  = String(r['ESTADO']||'').trim();
+    const lo      = estado.toLowerCase();
+    const obs     = lo.includes('observ');
+    const aut     = lo.includes('autoriz');
+    const cls     = claseEstado(estado);
+    const modulo  = r['MÓDULO']||r['MODULO']||'';
+    const os      = r['Obra social']||r['OBRA SOCIAL']||'';
+    const cuil    = r['NºCUIL']||r['CUIL']||'';
+
+    const fieldsHTML = `
+      <div class="auth-fields">
+        ${os ? `<div><div class="auth-field-label">Obra social</div><div class="auth-field-value">${esc(os)}</div></div>` : ''}
+        ${modulo ? `<div><div class="auth-field-label">Módulo</div><div class="auth-field-value">${esc(modulo)}</div></div>` : ''}
+      </div>
+      ${aut ? `<div class="auth-bono">📋 En caso de emisión de bonos, solicitarlo en la sucursal.</div>` : ''}
+    `;
+
+    const bodyHTML = obs
+      ? `<div class="auth-obs-wrap"><div class="auth-obs-blur">${fieldsHTML}</div><div class="auth-obs-overlay"><span class="auth-obs-icon">🔒</span><span class="auth-obs-label">Consultar con sucursal el motivo de observación</span></div></div>`
+      : fieldsHTML;
+
+    return `<div class="auth-card">
+      <div class="auth-card-top">
+        <div>
+          <div class="auth-afiliado">${esc(r['afiliado']||'—')}</div>
+          ${cuil ? `<div class="auth-cuil">CUIL ${esc(cuil)}</div>` : ''}
+        </div>
+        <span class="status-badge ${cls}"><span class="status-dot"></span>${esc(estado.toUpperCase()||'—')}</span>
+      </div>
+      <div class="auth-divider"></div>
+      ${bodyHTML}
+    </div>`;
+  }).join('');
+
+  $('aut-content').innerHTML = `
+    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar afiliado o filtrar por estado…" oninput="renderAutorizados(this.value)" value="${esc(q)}">
+    <div class="auth-summary">
+      <div class="auth-summary-txt"><strong>${autData.length}</strong> afiliado${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
+      <div class="auth-badges">${badgesHTML}</div>
+    </div>
+    <div class="auth-grid">${cards || '<div class="auth-empty">Sin resultados para "'+esc(q)+'"</div>'}</div>
+  `;
+}
+
+// ── PDF VIEWER ────────────────────────────────────────────
 async function abrirPDF(btn, nombre) {
   btn.disabled = true; btn.textContent = 'Cargando…';
-
   $('pdf-title').textContent = nombre + '.pdf';
   $('pdf-frame').classList.add('hidden');
   $('pdf-loading').style.display = 'flex';
   $('pdf-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-
   try {
     const res = await gasGet({action:'pdf', nombre, cuit:session.cuit, t:session.token});
     if (res.ok && res.data) {
@@ -395,31 +578,26 @@ async function abrirPDF(btn, nombre) {
       const blob  = new Blob([bytes], {type:'application/pdf'});
       if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
       pdfBlobUrl = URL.createObjectURL(blob);
-
       $('pdf-frame').src = pdfBlobUrl;
       $('btn-dl').href   = pdfBlobUrl;
       $('btn-dl').setAttribute('download', res.nombre || nombre+'.pdf');
       $('pdf-loading').style.display = 'none';
       $('pdf-frame').classList.remove('hidden');
     } else {
-      cerrarPDF();
-      alert('No se encontró el comprobante: ' + (res.error || nombre));
+      cerrarPDF(); alert('No se encontró el comprobante: ' + (res.error || nombre));
     }
-  } catch(e) {
-    cerrarPDF();
-    alert('Error de conexión al buscar el comprobante.');
-  }
+  } catch(e) { cerrarPDF(); alert('Error de conexión al buscar el comprobante.'); }
   btn.disabled = false; btn.textContent = 'Ver comprobante';
 }
 
 function cerrarPDF(e) {
   if (e && e.target !== $('pdf-overlay')) return;
   $('pdf-overlay').classList.remove('open');
-  $('pdf-frame').src = '';
-  $('pdf-frame').classList.add('hidden');
+  $('pdf-frame').src = ''; $('pdf-frame').classList.add('hidden');
   document.body.style.overflow = '';
 }
 
+// ── INIT ──────────────────────────────────────────────────
 $('inp-p').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 $('inp-u').addEventListener('keydown', e => { if(e.key==='Enter') $('inp-p').focus(); });
 
