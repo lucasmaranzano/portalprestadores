@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Prestadores — Integra</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f5f5f3;
+    --surface:  #ffffff;
+    --border:   #e2e2df;
+    --border2:  #cbcbc7;
+    --text:     #1a1a18;
+    --muted:    #6b6b67;
+    --hint:     #9b9b97;
+    --blue:     #185FA5;
+    --blue-dk:  #0C447C;
+    --blue-lt:  #E6F1FB;
+    --green:    #0F6E56;
+    --green-lt: #EAF3DE;
+    --amber:    #854F0B;
+    --amber-lt: #FAEEDA;
+    --red:      #993C1D;
+    --red-lt:   #FAECE7;
+    --radius:   8px;
+    --radius-lg:12px;
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* ── SPINNER ─────────────────────────────────────────── */
+  .spinner-overlay {
+    position: fixed; inset: 0; background: rgba(255,255,255,.75);
+    display: flex; align-items: center; justify-content: center; z-index: 999;
+  }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+
+  /* ── SCREENS ─────────────────────────────────────────── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── LOGIN ───────────────────────────────────────────── */
+  .login-wrap {
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 1.5rem;
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 380px;
+  }
+  .logo-area { text-align: center; margin-bottom: 1.75rem; }
+  .logo-sq {
+    width: 48px; height: 48px; border-radius: var(--radius); background: var(--blue-lt);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: var(--blue); margin-bottom: .75rem;
+  }
+  .login-title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .login-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 12px; font-weight: 500;
+                 color: var(--muted); margin-bottom: 5px; letter-spacing: .3px; }
+  .field input {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 14px; color: var(--text);
+    background: var(--surface); outline: none; transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--blue); }
+
+  .btn-login {
+    width: 100%; padding: 10px; border: none; border-radius: var(--radius);
+    background: var(--blue); color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: .25rem; transition: background .15s;
+  }
+  .btn-login:hover { background: var(--blue-dk); }
+  .btn-login:disabled { opacity: .6; cursor: not-allowed; }
+
+  .login-error {
+    font-size: 12px; color: var(--red); margin-top: .625rem;
+    text-align: center; display: none;
+  }
+
+  /* ── TOP BAR ─────────────────────────────────────────── */
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem; display: flex; align-items: center;
+    justify-content: space-between; height: 54px; position: sticky; top: 0; z-index: 10;
+  }
+  .tb-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--blue-lt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--blue); flex-shrink: 0;
+  }
+  .tb-name { font-size: 13px; font-weight: 600; white-space: nowrap;
+             overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .tb-cuit { font-size: 11px; color: var(--muted); }
+  .btn-logout {
+    font-size: 12px; color: var(--muted); background: none; border: none;
+    cursor: pointer; padding: 5px 10px; border-radius: var(--radius);
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .btn-logout:hover { background: var(--bg); }
+
+  /* ── MAIN CONTENT ────────────────────────────────────── */
+  .main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+
+  .tabs {
+    display: flex; gap: 3px; margin-bottom: 1.25rem;
+    background: var(--border); border-radius: var(--radius);
+    padding: 3px; width: fit-content;
+  }
+  .tab {
+    padding: 6px 18px; font-size: 13px; font-weight: 500; border-radius: 6px;
+    cursor: pointer; color: var(--muted); border: none; background: none;
+    transition: all .15s;
+  }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── SUMMARY CARDS ───────────────────────────────────── */
+  .summary {
+    display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px; margin-bottom: 1.25rem;
+  }
+  .scard { background: var(--bg); border-radius: var(--radius); padding: .875rem; }
+  .scard-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .scard-value { font-size: 20px; font-weight: 600; color: var(--text); }
+  .scard-value.green { color: var(--green); }
+  .scard-value.amber { color: var(--amber); }
+
+  /* ── FILTERS ─────────────────────────────────────────── */
+  .filters {
+    display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;
+  }
+  .filters select, .filters input {
+    font-size: 13px; padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--surface); color: var(--text);
+    outline: none;
+  }
+  .filters select:focus, .filters input:focus { border-color: var(--blue); }
+  .filters select { min-width: 150px; }
+  .filters input  { flex: 1; min-width: 160px; }
+
+  /* ── TABLE ───────────────────────────────────────────── */
+  .tbl-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    overflow: hidden; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--bg); padding: 9px 12px; text-align: left;
+    font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 9px 12px; border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #fafaf8; }
+
+  .aff-name { font-weight: 500; }
+  .aff-cuil  { font-size: 11px; color: var(--muted); }
+  .monto     { font-weight: 600; }
+  .imp-sub   { font-weight: 600; color: var(--green); }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 9px; border-radius: 99px; white-space: nowrap;
+  }
+  .badge-pagado   { background: var(--green-lt); color: var(--green); }
+  .badge-pendiente{ background: var(--amber-lt); color: var(--amber); }
+  .badge-nc       { background: var(--red-lt);   color: var(--red);   }
+
+  .btn-pdf {
+    font-size: 12px; color: var(--blue); background: none; border: none;
+    cursor: pointer; padding: 0; text-decoration: underline; white-space: nowrap;
+  }
+  .btn-pdf:hover { color: var(--blue-dk); }
+  .btn-pdf:disabled { color: var(--hint); cursor: wait; text-decoration: none; }
+
+  .no-rows { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 13px; }
+
+  /* ── MOBILE ──────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .scard-value { font-size: 17px; }
+    .tb-name { max-width: 160px; }
+    .tab { padding: 6px 12px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Spinner global -->
+<div class="spinner-overlay hidden" id="spinner"><div class="spinner"></div></div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div class="screen active" id="s-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="logo-area">
+        <div class="logo-sq">IP</div>
+        <div class="login-title">Portal Prestadores</div>
+        <div class="login-sub">Ingresá con tu usuario y contraseña</div>
+      </div>
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="inp-u" autocomplete="username" placeholder="Tu usuario">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="inp-p" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar</button>
+      <div class="login-error" id="login-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PORTAL ═══════════════ -->
+<div class="screen" id="s-portal">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="avatar" id="av">—</div>
+      <div>
+        <div class="tb-name" id="tb-nombre">—</div>
+        <div class="tb-cuit" id="tb-cuit">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="swTab('pres', this)">Presentaciones</button>
+      <button class="tab"        onclick="swTab('pagos', this)">Pagos</button>
+    </div>
+
+    <!-- ─── PRESENTACIONES ─── -->
+    <div class="panel active" id="panel-pres">
+      <div class="summary">
+        <div class="scard">
+          <div class="scard-label">Total presentado</div>
+          <div class="scard-value" id="s-total">—</div>
+        </div>
+        <div class="scard">
+          <div class="scard-label">Pagadas</div>
+          <div class="scard-value green" id="s-pag">—</div>
+        </div>
+        <div class="scard">
+          <div class="scard-label">Pendientes</div>
+          <div class="scard-value amber" id="s-pend">—</div>
+        </div>
+      </div>
+      <div class="filters">
+        <select id="f-periodo" onchange="renderPres()"><option value="">Todos los períodos</option></select>
+        <select id="f-estado" onchange="renderPres()">
+          <option value="">Todos los estados</option>
+          <option>Pendiente</option>
+          <option>Pagado</option>
+          <option>Nota de credito</option>
+        </select>
+        <input type="text" id="f-q" placeholder="Buscar por afiliado o CUIL…" oninput="renderPres()">
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Afiliado</th>
+              <th>Obra social</th>
+              <th>Período prest.</th>
+              <th>Nro. comp.</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Comprobante pago</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pres"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── PAGOS ─── -->
+    <div class="panel" id="panel-pagos">
+      <div class="summary">
+        <div class="scard">
+          <div class="scard-label">Total subsidiado</div>
+          <div class="scard-value green" id="p-sub">—</div>
+        </div>
+        <div class="scard">
+          <div class="scard-label">Liquidaciones</div>
+          <div class="scard-value" id="p-reg">—</div>
+        </div>
+        <div class="scard">
+          <div class="scard-label">Último período</div>
+          <div class="scard-value" id="p-ult">—</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Afiliado</th>
+              <th>Obra social</th>
+              <th>Presentación</th>
+              <th>Prestación</th>
+              <th>Imp. facturado</th>
+              <th>Imp. subsidiado</th>
+              <th>Nro. comp.</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pagos"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURACIÓN ────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqUCchjSg9HnrbuOE25b-Px5cI9rxwlL97qwUldha2vmTJuJZQES0tNNhFzyiVYr1_/exec';
+
+// ── ESTADO ───────────────────────────────────────────────────
+let session = null;   // { cuit, nombre, token }
+let presData = [];
+let pagosData = [];
+
+// ── HELPERS ──────────────────────────────────────────────────
+const fmt  = n => {
+  const num = parseFloat(n) || 0;
+  return num.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+};
+const fmtP = p => {
+  const s = String(p || '');
+  return s.length === 6 ? s.slice(0,4) + '/' + s.slice(4) : s;
+};
+const $  = id => document.getElementById(id);
+const spinner = show => $('spinner').classList.toggle('hidden', !show);
+
+async function gasGet(params) {
+  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  const res  = await fetch(url, { redirect: 'follow' });
+  return res.json();
+}
+
+function badge(estado) {
+  const e = String(estado || '').trim().toLowerCase();
+  if (e === 'pagado')          return `<span class="badge badge-pagado">Pagado</span>`;
+  if (e === 'pendiente')       return `<span class="badge badge-pendiente">Pendiente</span>`;
+  if (e.includes('nota'))      return `<span class="badge badge-nc">Nota de crédito</span>`;
+  return `<span class="badge badge-pendiente">${estado}</span>`;
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+async function doLogin() {
+  const u = $('inp-u').value.trim();
+  const p = $('inp-p').value.trim();
+  if (!u || !p) return;
+
+  spinner(true);
+  $('btn-login').disabled = true;
+  $('login-err').style.display = 'none';
+
+  try {
+    const res = await gasGet({ action: 'login', u, p });
+    if (res.ok) {
+      session = { cuit: res.cuit, nombre: res.nombre, token: res.token };
+      sessionStorage.setItem('ps_session', JSON.stringify(session));
+      mostrarPortal();
+      await cargarDatos();
+    } else {
+      $('login-err').textContent = res.error || 'Error al ingresar';
+      $('login-err').style.display = 'block';
+    }
+  } catch (e) {
+    $('login-err').textContent = 'No se pudo conectar. Intentá de nuevo.';
+    $('login-err').style.display = 'block';
+  }
+
+  spinner(false);
+  $('btn-login').disabled = false;
+}
+
+function doLogout() {
+  session = null; presData = []; pagosData = [];
+  sessionStorage.removeItem('ps_session');
+  $('s-portal').classList.remove('active');
+  $('s-login').classList.add('active');
+  $('inp-p').value = '';
+}
+
+// ── PORTAL ───────────────────────────────────────────────────
+function mostrarPortal() {
+  $('s-login').classList.remove('active');
+  $('s-portal').classList.add('active');
+
+  const ini = session.nombre.replace(/INTEGRA\s*-\s*/i,'').trim()
+              .split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+  $('av').textContent      = ini || 'P';
+  $('tb-nombre').textContent = session.nombre;
+  $('tb-cuit').textContent   = 'CUIT ' + session.cuit;
+}
+
+async function cargarDatos() {
+  spinner(true);
+  try {
+    const res = await gasGet({ action: 'data', cuit: session.cuit, t: session.token });
+    if (res.ok) {
+      presData  = res.presentaciones || [];
+      pagosData = res.pagos          || [];
+      poblarPeriodos();
+      renderPres();
+      renderPagos();
+    } else {
+      alert('Error al cargar datos: ' + (res.error || 'desconocido'));
+    }
+  } catch (e) {
+    alert('Error de conexión al cargar datos.');
+  }
+  spinner(false);
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function swTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $('panel-' + name).classList.add('active');
+}
+
+// ── PRESENTACIONES ───────────────────────────────────────────
+function poblarPeriodos() {
+  const sel  = $('f-periodo');
+  const pers = [...new Set(presData.map(r => r.periodo))].sort().reverse();
+  sel.innerHTML = '<option value="">Todos los períodos</option>';
+  pers.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = fmtP(p); sel.appendChild(o);
+  });
+}
+
+function renderPres() {
+  const per  = $('f-periodo').value;
+  const est  = $('f-estado').value;
+  const q    = $('f-q').value.toLowerCase();
+
+  let rows = presData;
+  if (per) rows = rows.filter(r => r.periodo  === per);
+  if (est) rows = rows.filter(r => String(r.estado).toLowerCase() === est.toLowerCase());
+  if (q)   rows = rows.filter(r =>
+    String(r.afiliado).toLowerCase().includes(q) || String(r.cuil).includes(q)
+  );
+
+  const total = rows.reduce((s, r) => s + (parseFloat(r.monto) || 0), 0);
+  $('s-total').textContent = fmt(total);
+  $('s-pag').textContent   = rows.filter(r => String(r.estado).toLowerCase() === 'pagado').length;
+  $('s-pend').textContent  = rows.filter(r => String(r.estado).toLowerCase() === 'pendiente').length;
+
+  const tb = $('tbody-pres');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="no-rows">Sin resultados para los filtros seleccionados</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = rows.map(r => `
+    <tr>
+      <td>
+        <div class="aff-name">${r.afiliado || '—'}</div>
+        <div class="aff-cuil">${r.cuil || ''}</div>
+      </td>
+      <td>${r.os || '—'}</td>
+      <td>${fmtP(r.periPrest)}</td>
+      <td>${r.nroComp || '—'}</td>
+      <td class="monto">${fmt(r.monto)}</td>
+      <td>${badge(r.estado)}</td>
+      <td>${
+        String(r.estado).toLowerCase() === 'pagado'
+          ? `<button class="btn-pdf" onclick="abrirPDF(this, '${String(r.archivo).replace(/'/g,"\\'")}')">Ver PDF</button>`
+          : '<span style="color:#9b9b97;font-size:12px">—</span>'
+      }</td>
+    </tr>
+  `).join('');
+}
+
+// ── PAGOS ─────────────────────────────────────────────────────
+function renderPagos() {
+  const rows = pagosData;
+  const totSub = rows.reduce((s, r) => s + (parseFloat(r.impSub) || 0), 0);
+  $('p-sub').textContent = fmt(totSub);
+  $('p-reg').textContent = rows.length;
+  const pers = rows.map(r => r.pres).sort().reverse();
+  $('p-ult').textContent = pers.length ? fmtP(pers[0]) : '—';
+
+  const tb = $('tbody-pagos');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="no-rows">Sin pagos registrados</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(r => `
+    <tr>
+      <td>
+        <div class="aff-name">${r.afiliado || '—'}</div>
+        <div class="aff-cuil">${r.cuil || ''}</div>
+      </td>
+      <td>${r.os || '—'}</td>
+      <td>${fmtP(r.pres)}</td>
+      <td>${fmtP(r.prest)}</td>
+      <td>${fmt(r.impFac)}</td>
+      <td class="imp-sub">${fmt(r.impSub)}</td>
+      <td>${r.nroComp || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── PDF ───────────────────────────────────────────────────────
+async function abrirPDF(btn, nombre) {
+  btn.disabled = true;
+  btn.textContent = 'Buscando…';
+  try {
+    const res = await gasGet({ action: 'pdf', nombre, cuit: session.cuit, t: session.token });
+    if (res.ok && res.url) {
+      window.open(res.url, '_blank');
+    } else {
+      alert('No se encontró el comprobante: ' + (res.error || nombre));
+    }
+  } catch (e) {
+    alert('Error de conexión al buscar el PDF.');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Ver PDF';
+}
+
+// ── ENTER en login ────────────────────────────────────────────
+$('inp-p').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('inp-u').addEventListener('keydown', e => { if (e.key === 'Enter') $('inp-p').focus(); });
+
+// ── RESTORE SESSION (si recarga la página) ────────────────────
+(function() {
+  const saved = sessionStorage.getItem('ps_session');
+  if (saved) {
+    try {
+      session = JSON.parse(saved);
+      mostrarPortal();
+      cargarDatos();
+    } catch(e) { sessionStorage.removeItem('ps_session'); }
+  }
+})();
+</script>
+</body>
+</html>
