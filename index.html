@@ -397,6 +397,7 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
 .s-otro .status-dot { background: var(--purple); }
 .auth-loading { text-align: center; padding: 3.5rem; color: var(--muted); font-size: 13px; }
 .auth-empty   { text-align: center; padding: 3.5rem; color: var(--muted); font-size: 13px; }
+.auth-warning { display: flex; align-items: center; gap: 8px; background: var(--amber-lt); border: 1.5px solid rgba(133,79,11,.3); border-radius: var(--radius); padding: 9px 13px; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: .3px; }
 
 /* ── ADMIN PANEL ─────────────────────────────────────────── */
 .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
@@ -491,7 +492,7 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
     <!-- Tabs -->
     <div class="tabs" id="tabs-bar">
       <button class="tab active" onclick="swTab('pres',this)">Presentaciones</button>
-      <button class="tab"        onclick="swTab('aut',this)" id="tab-aut">Afiliados autorizados</button>
+      <button class="tab"        onclick="swTab('aut',this)" id="tab-aut">Legajos autorizados</button>
       <button class="tab admin-tab hidden" onclick="swTab('admin',this)" id="tab-admin">Panel Admin</button>
     </div>
 
@@ -590,12 +591,12 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
       </div><!-- /pres-layout -->
     </div><!-- /panel-pres -->
 
-    <!-- ── AFILIADOS AUTORIZADOS ── -->
+    <!-- ── LEGAJOS AUTORIZADOS ── -->
     <div class="panel" id="panel-aut">
       <div id="aut-content">
         <div class="auth-loading">
           <div class="spinner" style="margin:0 auto 12px;"></div>
-          Cargando afiliados autorizados…
+          Cargando legajos autorizados…
         </div>
       </div>
     </div>
@@ -827,9 +828,35 @@ function renderPres() {
   </tr>`).join('');
 }
 
-// ── AFILIADOS AUTORIZADOS ─────────────────────────────────
+// ── LEGAJOS AUTORIZADOS ───────────────────────────────────
+const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+function getField(r, ...keys) {
+  for (const k of keys) {
+    if (r[k] !== undefined && String(r[k]).trim() !== '') return r[k];
+  }
+  return '';
+}
+
+function toMonthNum(val) {
+  if (!val && val !== 0) return null;
+  const upper = String(val).trim().toUpperCase();
+  const idx = MESES.indexOf(upper);
+  if (idx >= 0) return idx + 1;
+  const n = parseInt(val);
+  if (n >= 1 && n <= 12) return n;
+  const d = val instanceof Date ? val : new Date(val);
+  if (!isNaN(d.getTime())) return d.getMonth() + 1;
+  return null;
+}
+
+function toMonthName(val) {
+  const n = toMonthNum(val);
+  return n ? MESES[n - 1] : '';
+}
+
 async function cargarAutorizados() {
-  $('aut-content').innerHTML = `<div class="auth-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Cargando afiliados autorizados…</div>`;
+  $('aut-content').innerHTML = `<div class="auth-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Cargando legajos autorizados…</div>`;
   try {
     const res = await gasGet({action:'autorizados', cuit: viewCuit, t: session.token});
     if (res.ok) {
@@ -845,7 +872,7 @@ async function cargarAutorizados() {
 
 function renderAutorizados(q) {
   if (!autData || !autData.length) {
-    $('aut-content').innerHTML = `<div class="auth-empty">No hay afiliados autorizados registrados para este prestador.</div>`;
+    $('aut-content').innerHTML = `<div class="auth-empty">No hay legajos autorizados registrados para este prestador.</div>`;
     return;
   }
   const txt = (q||'').toLowerCase();
@@ -865,6 +892,8 @@ function renderAutorizados(q) {
   autData.forEach(r => { const e = String(r['ESTADO']||'Sin estado').trim(); conteo.set(e,(conteo.get(e)||0)+1); });
   const badgesHTML = [...conteo].map(([e,n]) => `<span class="auth-count-badge ${claseEstado(e)}">${esc(e.toUpperCase())}: ${n}</span>`).join('');
 
+  const mesActual = new Date().getMonth() + 1; // 1-12
+
   const cards = rows.map(r => {
     const estado = String(r['ESTADO']||'').trim();
     const lo     = estado.toLowerCase();
@@ -875,12 +904,22 @@ function renderAutorizados(q) {
     const os     = r['Obra social']||r['OBRA SOCIAL']||'';
     const cuil   = r['NºCUIL']||r['CUIL']||'';
 
+    const rawInicio = getField(r, 'INICIO', 'MES INICIO', 'MES DE INICIO', 'MES_INICIO', 'Inicio', 'inicio');
+    const rawFin    = getField(r, 'FIN',    'MES FIN',    'MES DE FIN',    'MES_FIN',    'Fin',    'fin');
+    const mesInicioNombre = toMonthName(rawInicio);
+    const mesFinNombre    = toMonthName(rawFin);
+    const mesFinNum       = toMonthNum(rawFin);
+    const showWarning     = aut && mesFinNum !== null && mesFinNum <= mesActual;
+
     const fieldsHTML = `
       <div class="auth-fields">
         ${os ? `<div><div class="auth-field-label">Obra social</div><div class="auth-field-value">${esc(os)}</div></div>` : ''}
         ${modulo ? `<div><div class="auth-field-label">Módulo</div><div class="auth-field-value">${esc(modulo)}</div></div>` : ''}
+        ${mesInicioNombre ? `<div><div class="auth-field-label">Mes inicio</div><div class="auth-field-value">${esc(mesInicioNombre)}</div></div>` : ''}
+        ${mesFinNombre ? `<div><div class="auth-field-label">Mes fin</div><div class="auth-field-value">${esc(mesFinNombre)}</div></div>` : ''}
       </div>
-      ${aut ? `<div class="auth-bono">📋 En caso de emisión de bonos, solicitarlo en la sucursal.</div>` : ''}`;
+      ${aut ? `<div class="auth-bono">📋 En caso de emisión de bonos, solicitarlo en la sucursal.</div>` : ''}
+      ${showWarning ? `<div class="auth-warning">⚠️ Comunicarse con sucursal para revisar autorización</div>` : ''}`;
 
     const bodyHTML = obs
       ? `<div class="auth-obs-wrap"><div class="auth-obs-blur">${fieldsHTML}</div><div class="auth-obs-overlay"><span class="auth-obs-icon">🔒</span><span class="auth-obs-label">Consultar con sucursal el motivo de observación</span></div></div>`
@@ -900,9 +939,9 @@ function renderAutorizados(q) {
   }).join('');
 
   $('aut-content').innerHTML = `
-    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar afiliado o filtrar por estado…" oninput="renderAutorizados(this.value)" value="${esc(q)}">
+    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizados(this.value)" value="${esc(q)}">
     <div class="auth-summary">
-      <div class="auth-summary-txt"><strong>${autData.length}</strong> afiliado${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
+      <div class="auth-summary-txt"><strong>${autData.length}</strong> legajo${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
       <div class="auth-badges">${badgesHTML}</div>
     </div>
     <div class="auth-grid">${cards || '<div class="auth-empty">Sin resultados para "'+esc(q)+'"</div>'}</div>`;
