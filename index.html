@@ -697,7 +697,7 @@ async function doLogin() {
     const res = await gasGet({action:'login', u, p});
     if (res.ok) {
       session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin};
-      sessionStorage.setItem('ps_session', JSON.stringify(session));
+      localStorage.setItem('ps_session', JSON.stringify(session));
       viewCuit   = session.cuit;
       viewNombre = session.nombre;
       mostrarPortal();
@@ -719,7 +719,7 @@ function doLogout() {
   novedadesData = []; allPrestadores = [];
   viewCuit = null; viewNombre = null;
   if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); pdfBlobUrl = null; }
-  sessionStorage.removeItem('ps_session');
+  localStorage.removeItem('ps_session');
   $('s-portal').classList.remove('active');
   $('s-login').classList.add('active');
   $('inp-p').value = '';
@@ -1086,6 +1086,26 @@ function volverAdmin() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('s-login').classList.contains('active')) doLogin();
 });
+
+// ── Restaurar sesión al recargar ───────────────────────────
+(async function initSession() {
+  const stored = localStorage.getItem('ps_session');
+  if (!stored) return;
+  try {
+    const s = JSON.parse(stored);
+    if (!s || !s.token || !s.cuit) return;
+    session    = s;
+    viewCuit   = s.cuit;
+    viewNombre = s.nombre;
+    mostrarPortal();
+    spin(true);
+    await Promise.all([cargarDatos(), cargarNovedades()]);
+    if (session.isAdmin) await cargarPrestadores();
+    spin(false);
+  } catch(e) {
+    localStorage.removeItem('ps_session');
+  }
+})();
 </script>
 </body>
 </html>
