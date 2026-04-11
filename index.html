@@ -434,16 +434,133 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 1100px) { .pres-layout { grid-template-columns: 190px 1fr 240px; } }
-@media (max-width: 960px)  { .pres-layout { grid-template-columns: 1fr; } .admin-layout { grid-template-columns: 1fr; } }
+@media (max-width: 960px)  {
+  .pres-layout { grid-template-columns: 1fr; }
+  .admin-layout { grid-template-columns: 1fr; }
+}
+
+/* ── TABLET / MÓVIL GRANDE (≤ 700px) ────────────────────── */
 @media (max-width: 700px) {
+  /* Topbar */
+  .topbar { padding: 0 .875rem; height: 54px; }
+  .topbar-logo { height: 30px; max-width: 100px; }
+  .tb-sep { display: none; }
+  .tb-name { max-width: 130px; }
+  .btn-logout { padding: 7px 10px; font-size: 11px; }
+
+  /* Tabs: scroll horizontal sin scrollbar visible */
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 7px 13px; font-size: 12.5px; flex-shrink: 0; }
+
+  /* Main padding */
+  .main { padding: 1rem; }
+
+  /* Métricas: 2 columnas, primera abarca todo el ancho */
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .mc:first-child { grid-column: 1 / -1; }
   .mc-value { font-size: 19px; }
-  .tb-name { max-width: 150px; }
-  .tab { padding: 6px 10px; font-size: 12px; }
-  .pdf-modal { height: 96vh; border-radius: var(--radius); }
+
+  /* Tabla: celdas más compactas */
+  thead th { padding: 8px 10px; font-size: 10px; }
+  tbody td { padding: 9px 10px; }
+
+  /* PDF Modal */
+  .pdf-overlay { padding: 0; align-items: flex-end; }
+  .pdf-modal { height: 96vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-width: 100%; }
+
+  /* Autorizados */
   .auth-card-top { flex-direction: column; }
-  .topbar-logo { height: 30px; max-width: 100px; }
+  .auth-fields { grid-template-columns: 1fr 1fr; }
+
+  /* Admin banner */
+  .admin-banner { flex-wrap: wrap; padding: 8px .875rem; }
+  .btn-volver { width: 100%; text-align: center; }
+}
+
+/* ── MÓVIL PEQUEÑO (≤ 480px) ─────────────────────────────── */
+@media (max-width: 480px) {
+  /* Topbar: ocultar avatar en pantallas muy pequeñas */
+  .topbar { padding: 0 .75rem; height: 52px; }
+  .topbar-logo { height: 26px; max-width: 88px; }
+  .tb-cuit { display: none; }
+  .tb-name { max-width: 110px; font-size: 12px; }
+  .btn-logout { padding: 6px 9px; font-size: 11px; border-radius: 8px; }
+
+  /* Main */
+  .main { padding: 0.75rem; }
+
+  /* Tabs */
+  .tab { padding: 7px 11px; font-size: 12px; }
+
+  /* Métricas: 1 columna en teléfonos muy pequeños */
+  .metrics { grid-template-columns: 1fr; }
+  .mc:first-child { grid-column: auto; }
+  .mc-value { font-size: 20px; }
+
+  /* Tabla: indicar scroll lateral con gradiente */
+  .tbl-wrap {
+    position: relative;
+  }
+  thead th { padding: 7px 8px; font-size: 9.5px; }
+  tbody td { padding: 8px 8px; font-size: 12px; }
+  .badge { font-size: 10px; padding: 2px 7px; }
+
+  /* PDF modal: pantalla completa */
+  .pdf-modal { height: 100dvh; border-radius: 0; }
+  .pdf-header { padding: .75rem 1rem; }
+  .pdf-title { font-size: 12px; }
+  .btn-dl { font-size: 11px; padding: 6px 12px; }
+  .btn-close-pdf { font-size: 11px; padding: 6px 10px; }
+
+  /* Autorizados */
+  .auth-card { padding: 1rem; }
+  .auth-afiliado { font-size: 14px; }
+  .auth-fields { grid-template-columns: 1fr; gap: 10px 0; }
+  .status-badge { font-size: 10px; padding: 4px 10px; }
+
+  /* Sidebar card */
+  .sidebar-card { padding: .875rem; }
+
+  /* Admin */
+  .admin-section { padding: 1rem; }
+}
+
+/* ── MEJORAS DE TOUCH PARA TODOS LOS MÓVILES ─────────────── */
+@media (hover: none) and (pointer: coarse) {
+  /* Aumentar área táctil de botones */
+  .btn-logout,
+  .btn-volver,
+  .btn-login,
+  .btn-add-nov,
+  .btn-add-nov2,
+  .btn-ver,
+  .btn-dl,
+  .btn-close-pdf { min-height: 44px; }
+
+  .tab { min-height: 40px; }
+
+  /* Campos de formulario más grandes para dedos */
+  .field input,
+  .filter-group select,
+  .filter-group input,
+  .auth-filter,
+  .admin-search,
+  .nov-form input,
+  .nov-form textarea,
+  .admin-nov-form input,
+  .admin-nov-form textarea { font-size: 16px; /* evita zoom automático en iOS */ padding: 11px 14px; }
+
+  /* Deshabilitar hover effects que no aplican en touch */
+  .mc:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .auth-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .novedad-card:hover { transform: none; }
 }
 </style>
 </head>
@@ -954,13 +1071,10 @@ function renderAutorizados(q) {
 }
 
 // ── PDF VIEWER ────────────────────────────────────────────
+const isMobile = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches || window.innerWidth <= 700;
+
 async function abrirPDF(btn, nombre) {
   btn.disabled = true; btn.textContent = 'Cargando…';
-  $('pdf-title').textContent = nombre + '.pdf';
-  $('pdf-frame').classList.add('hidden');
-  $('pdf-loading').style.display = 'flex';
-  $('pdf-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
   try {
     const res = await gasGet({action:'pdf', nombre, cuit: viewCuit, t: session.token});
     if (res.ok && res.data) {
@@ -968,22 +1082,34 @@ async function abrirPDF(btn, nombre) {
       const blob  = new Blob([bytes], {type:'application/pdf'});
       if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
       pdfBlobUrl = URL.createObjectURL(blob);
-      $('pdf-frame').src = pdfBlobUrl;
-      $('btn-dl').href   = pdfBlobUrl;
-      $('btn-dl').setAttribute('download', res.nombre || nombre+'.pdf');
-      $('pdf-loading').style.display = 'none';
-      $('pdf-frame').classList.remove('hidden');
+      const dlName = res.nombre || nombre+'.pdf';
+      $('btn-dl').href = pdfBlobUrl;
+      $('btn-dl').setAttribute('download', dlName);
+      if (isMobile()) {
+        // En móvil: abrir en nueva pestaña (más compatible con iOS Safari)
+        window.open(pdfBlobUrl, '_blank');
+      } else {
+        $('pdf-title').textContent = dlName;
+        $('pdf-frame').classList.add('hidden');
+        $('pdf-loading').style.display = 'flex';
+        $('pdf-overlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        $('pdf-frame').src = pdfBlobUrl;
+        $('pdf-loading').style.display = 'none';
+        $('pdf-frame').classList.remove('hidden');
+      }
     } else {
-      cerrarPDF(); alert('No se encontró el comprobante: ' + (res.error || nombre));
+      alert('No se encontró el comprobante: ' + (res.error || nombre));
     }
-  } catch(e) { cerrarPDF(); alert('Error de conexión al buscar el comprobante.'); }
+  } catch(e) { alert('Error de conexión al buscar el comprobante.'); }
   btn.disabled = false; btn.textContent = 'Ver comprobante';
 }
 
 function cerrarPDF(e) {
   if (e && e.target !== $('pdf-overlay')) return;
   $('pdf-overlay').classList.remove('open');
-  $('pdf-frame').src = ''; $('pdf-frame').classList.add('hidden');
+  $('pdf-frame').src = '';
+  $('pdf-frame').classList.add('hidden');
   document.body.style.overflow = '';
 }
 
