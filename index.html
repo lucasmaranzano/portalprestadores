@@ -126,7 +126,21 @@ body {
 .btn-login:hover  { box-shadow: 0 6px 20px rgba(26,111,196,.45); transform: translateY(-1px); }
 .btn-login:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(26,111,196,.3); }
 .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-.login-error { font-size: 12.5px; color: var(--red); background: var(--red-lt); border: 1px solid rgba(153,60,29,.2); border-radius: var(--radius); padding: 8px 12px; margin-top: .75rem; text-align: center; display: none; }
+.login-error { font-size: 12.5px; color: var(--red); background: var(--red-lt); border: 1px solid rgba(153,60,29,.2); border-radius: var(--radius); padding: 10px 14px; margin-top: .75rem; text-align: center; display: none; gap: 6px; align-items: center; justify-content: center; }
+.login-error.visible { display: flex; animation: fadeIn .2s ease; }
+.input-wrap { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--hint); pointer-events: none; display: flex; align-items: center; }
+.input-wrap input { padding-left: 38px !important; }
+.toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--hint); display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: color .15s; }
+.toggle-pass:hover { color: var(--blue); }
+.field-hint { font-size: 11px; color: var(--hint); margin-top: 5px; padding-left: 2px; }
+.field-hint strong { color: var(--muted); }
+.field.error .input-wrap input { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(153,60,29,.1) !important; }
+.field.ok .input-wrap input { border-color: var(--green) !important; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.login-card.shake { animation: shake .4s cubic-bezier(.36,.07,.19,.97); }
+.login-footer { text-align: center; margin-top: 1.5rem; font-size: 11.5px; color: var(--hint); }
+.btn-login { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* ── PORTAL BACKGROUND ───────────────────────────────────── */
 #s-portal {
@@ -571,17 +585,46 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
 <!-- ═══════════════════════════════ LOGIN ═══════════════════════════════ -->
 <div class="screen active" id="s-login">
   <div class="login-wrap">
-    <div class="login-card">
+    <div class="login-card" id="login-card">
       <div class="login-logo-wrap">
         <img class="login-logo" src="https://raw.githubusercontent.com/lucasmaranzano/logoboreal/refs/heads/main/logo%20boreal2.png" alt="Logo Integra">
         <div class="login-title">Portal Prestadores</div>
         <div class="login-sub">Sistema de gestión · Integra</div>
       </div>
       <div class="login-divider"></div>
-      <div class="field"><label>Usuario</label><input type="text" id="inp-u" autocomplete="username" placeholder="Tu usuario"></div>
-      <div class="field"><label>Contraseña</label><input type="password" id="inp-p" autocomplete="current-password" placeholder="••••••••"></div>
-      <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar al portal</button>
+
+      <div class="field" id="field-u">
+        <label for="inp-u">Usuario</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </span>
+          <input type="text" id="inp-u" autocomplete="username" placeholder="integraXXXXX"
+                 oninput="clearFieldError('field-u')" onkeydown="if(event.key==='Enter')$('inp-p').focus()">
+        </div>
+        <div class="field-hint">Ingresá tu usuario · comienza con <strong>integra</strong></div>
+      </div>
+
+      <div class="field" id="field-p">
+        <label for="inp-p">Contraseña</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input type="password" id="inp-p" autocomplete="current-password" placeholder="••••••••"
+                 oninput="clearFieldError('field-p')" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="toggle-pass" type="button" id="toggle-pass" onclick="togglePass()" tabindex="-1" title="Mostrar / ocultar contraseña">
+            <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-login" id="btn-login" onclick="doLogin()">
+        <span>Ingresar al portal</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
       <div class="login-error" id="login-err"></div>
+      <div class="login-footer">¿Problemas para ingresar? Contactá a tu administrador.</div>
     </div>
   </div>
 </div>
@@ -811,12 +854,46 @@ function claseEstado(e) {
 }
 
 // ── LOGIN ──────────────────────────────────────────────────
+function clearFieldError(fieldId) {
+  $( fieldId ).classList.remove('error');
+}
+
+function showLoginError(msg) {
+  const err = $('login-err');
+  err.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>${msg}</span>`;
+  err.classList.add('visible');
+  const card = $('login-card');
+  card.classList.remove('shake');
+  void card.offsetWidth; // reflow para reiniciar animación
+  card.classList.add('shake');
+  setTimeout(() => card.classList.remove('shake'), 400);
+}
+
+function hideLoginError() {
+  $('login-err').classList.remove('visible');
+}
+
+function togglePass() {
+  const inp = $('inp-p');
+  const isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+  $('eye-icon').innerHTML = isPass
+    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`
+    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+}
+
 async function doLogin() {
   const u = $('inp-u').value.trim();
   const p = $('inp-p').value.trim();
-  if (!u || !p) return;
+
+  // Validación cliente
+  let hasError = false;
+  if (!u) { $('field-u').classList.add('error'); hasError = true; }
+  if (!p) { $('field-p').classList.add('error'); hasError = true; }
+  if (hasError) { showLoginError('Completá usuario y contraseña para continuar.'); return; }
+
+  hideLoginError();
   spin(true); $('btn-login').disabled = true;
-  $('login-err').style.display = 'none';
   try {
     const res = await gasGet({action:'login', u, p});
     if (res.ok) {
@@ -828,12 +905,12 @@ async function doLogin() {
       await Promise.all([cargarDatos(), cargarNovedades()]);
       if (session.isAdmin) await cargarPrestadores();
     } else {
-      $('login-err').textContent = res.error || 'Error al ingresar';
-      $('login-err').style.display = 'block';
+      $('field-u').classList.add('error');
+      $('field-p').classList.add('error');
+      showLoginError(res.error || 'Usuario o contraseña incorrectos.');
     }
   } catch(e) {
-    $('login-err').textContent = 'No se pudo conectar. Intentá de nuevo.';
-    $('login-err').style.display = 'block';
+    showLoginError('No se pudo conectar. Intentá de nuevo.');
   }
   spin(false); $('btn-login').disabled = false;
 }
@@ -846,7 +923,14 @@ function doLogout() {
   localStorage.removeItem('ps_session');
   $('s-portal').classList.remove('active');
   $('s-login').classList.add('active');
+  $('inp-u').value = '';
   $('inp-p').value = '';
+  // Resetear tipo contraseña y estado visual
+  $('inp-p').type = 'password';
+  $('eye-icon').innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  $('field-u').classList.remove('error','ok');
+  $('field-p').classList.remove('error','ok');
+  hideLoginError();
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelector('.tab').classList.add('active');
