@@ -897,7 +897,7 @@ async function doLogin() {
   try {
     const res = await gasGet({action:'login', u, p});
     if (res.ok) {
-      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin};
+      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin, loginAt:Date.now()};
       localStorage.setItem('ps_session', JSON.stringify(session));
       viewCuit   = session.cuit;
       viewNombre = session.nombre;
@@ -1343,12 +1343,17 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Restaurar sesión al recargar ───────────────────────────
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
 (async function initSession() {
   const stored = localStorage.getItem('ps_session');
   if (!stored) return;
   try {
     const s = JSON.parse(stored);
     if (!s || !s.token || !s.cuit) return;
+    if (!s.loginAt || (Date.now() - s.loginAt) > SESSION_TTL_MS) {
+      localStorage.removeItem('ps_session');
+      return;
+    }
     session    = s;
     viewCuit   = s.cuit;
     viewNombre = s.nombre;
