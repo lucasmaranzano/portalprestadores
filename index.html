@@ -907,7 +907,7 @@ async function doLogin() {
       viewCuit   = session.cuit;
       viewNombre = session.nombre;
       mostrarPortal();
-      await Promise.all([cargarDatos(), cargarNovedades()]);
+      await Promise.all([cargarDatos(), cargarNovedades(), cargarAutorizados()]);
       if (session.isAdmin) await cargarPrestadores();
     } else {
       $('field-u').classList.add('error');
@@ -1332,7 +1332,7 @@ async function adminVerPrestador(cuit, nombre) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelector('.tab').classList.add('active');
   $('panel-pres').classList.add('active');
-  await cargarDatos();
+  await Promise.all([cargarDatos(), cargarAutorizados()]);
 }
 
 function volverAdmin() {
@@ -1368,7 +1368,7 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
     viewNombre = s.nombre;
     mostrarPortal();
     spin(true);
-    await Promise.all([cargarDatos(), cargarNovedades()]);
+    await Promise.all([cargarDatos(), cargarNovedades(), cargarAutorizados()]);
     if (session.isAdmin) await cargarPrestadores();
     spin(false);
   } catch(e) {
