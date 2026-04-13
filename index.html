@@ -949,6 +949,10 @@ function mostrarPortal() {
     $('av').classList.add('admin');
     $('tab-admin').classList.remove('hidden');
     $('nov-form-sidebar').classList.remove('hidden');
+  } else {
+    $('av').classList.remove('admin');
+    $('tab-admin').classList.add('hidden');
+    $('nov-form-sidebar').classList.add('hidden');
   }
 }
 
@@ -1200,7 +1204,7 @@ function cerrarPDF(e) {
 // ── NOVEDADES ─────────────────────────────────────────────
 async function cargarNovedades() {
   try {
-    const res = await gasGet({action:'novedades'});
+    const res = await gasGet({action:'novedades', t: session.token});
     if (res.ok) {
       novedadesData = res.novedades || [];
       renderNovedadesSidebar();
