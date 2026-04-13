@@ -1079,6 +1079,11 @@ async function cargarAutorizados() {
     const res = await gasGet({action:'autorizados', cuit: viewCuit, t: session.token});
     if (res.ok) {
       autData = res.autorizados || [];
+      // Render the shell once (input + result containers) then fill results
+      $('aut-content').innerHTML = `
+        <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizadosDebounced(this.value)">
+        <div id="aut-summary"></div>
+        <div id="aut-grid"></div>`;
       renderAutorizados('');
     } else {
       $('aut-content').innerHTML = `<div class="auth-empty" style="color:var(--red)">Error al cargar: ${esc(res.error||'desconocido')}</div>`;
@@ -1090,7 +1095,12 @@ async function cargarAutorizados() {
 
 function renderAutorizados(q) {
   if (!autData || !autData.length) {
-    $('aut-content').innerHTML = `<div class="auth-empty">No hay legajos autorizados registrados para este prestador.</div>`;
+    if ($('aut-grid')) {
+      $('aut-summary').innerHTML = '';
+      $('aut-grid').innerHTML = `<div class="auth-empty">No hay legajos autorizados registrados para este prestador.</div>`;
+    } else {
+      $('aut-content').innerHTML = `<div class="auth-empty">No hay legajos autorizados registrados para este prestador.</div>`;
+    }
     return;
   }
   const txt = (q||'').toLowerCase();
@@ -1156,13 +1166,12 @@ function renderAutorizados(q) {
     </div>`;
   }).join('');
 
-  $('aut-content').innerHTML = `
-    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizadosDebounced(this.value)" value="${esc(q)}">
+  $('aut-summary').innerHTML = `
     <div class="auth-summary">
       <div class="auth-summary-txt"><strong>${autData.length}</strong> legajo${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
       <div class="auth-badges">${badgesHTML}</div>
-    </div>
-    <div class="auth-grid">${cards || '<div class="auth-empty">Sin resultados para "'+esc(q)+'"</div>'}</div>`;
+    </div>`;
+  $('aut-grid').innerHTML = cards || `<div class="auth-empty">Sin resultados para "${esc(q)}"</div>`;
 }
 
 // ── PDF VIEWER ────────────────────────────────────────────
