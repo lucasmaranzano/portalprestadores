@@ -714,7 +714,7 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
               </div>
               <div>
                 <label class="filter-label">Afiliado / CUIL</label>
-                <input type="text" id="f-q" placeholder="Buscar…" oninput="renderPres()">
+                <input type="text" id="f-q" placeholder="Buscar…" oninput="renderPresDebounced()">
               </div>
             </div>
           </div>
@@ -771,7 +771,7 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
         <!-- Prestadores -->
         <div class="admin-section">
           <div class="admin-section-title">Prestadores registrados</div>
-          <input type="text" class="admin-search" id="admin-search" placeholder="Buscar por nombre o CUIT…" oninput="filtrarPrestadores()">
+          <input type="text" class="admin-search" id="admin-search" placeholder="Buscar por nombre o CUIT…" oninput="filtrarPrestadoresDebounced()">
           <div id="admin-prestadores-list"><div class="admin-list-empty">Cargando…</div></div>
         </div>
         <!-- Novedades (gestión) -->
@@ -831,6 +831,11 @@ const fmtP = p => { const s=String(p||''); return s.length===6 ? s.slice(0,4)+'/
 const esc  = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $    = id => document.getElementById(id);
 const spin = v  => $('spinner').classList.toggle('hidden', !v);
+
+const debounce = (fn, delay) => { let to; return (...v) => { clearTimeout(to); to = setTimeout(() => fn(...v), delay); }; };
+const renderPresDebounced = debounce(() => renderPres(), 250);
+const renderAutorizadosDebounced = debounce(v => renderAutorizados(v), 250);
+const filtrarPrestadoresDebounced = debounce(() => filtrarPrestadores(), 250);
 
 async function gasGet(params) {
   const res = await fetch(GAS_URL+'?'+new URLSearchParams(params).toString(), {redirect:'follow'});
@@ -1150,7 +1155,7 @@ function renderAutorizados(q) {
   }).join('');
 
   $('aut-content').innerHTML = `
-    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizados(this.value)" value="${esc(q)}">
+    <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizadosDebounced(this.value)" value="${esc(q)}">
     <div class="auth-summary">
       <div class="auth-summary-txt"><strong>${autData.length}</strong> legajo${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
       <div class="auth-badges">${badgesHTML}</div>
