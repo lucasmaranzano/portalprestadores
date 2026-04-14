@@ -317,8 +317,8 @@ function renderAutorizados(q) {
     const os     = r['Obra social']||r['OBRA SOCIAL']||'';
     const cuil   = r['NºCUIL']||r['CUIL']||'';
 
-    const rawInicio = getField(r, 'INICIO', 'MES INICIO', 'MES DE INICIO', 'MES_INICIO', 'Inicio', 'inicio');
-    const rawFin    = getField(r, 'FIN',    'MES FIN',    'MES DE FIN',    'MES_FIN',    'Fin',    'fin');
+    const rawInicio = r['COLUMNA_U'] !== undefined && String(r['COLUMNA_U']).trim() ? r['COLUMNA_U'] : getField(r, 'INICIO', 'MES INICIO', 'MES DE INICIO', 'MES_INICIO', 'Inicio', 'inicio');
+    const rawFin    = r['COLUMNA_V'] !== undefined && String(r['COLUMNA_V']).trim() ? r['COLUMNA_V'] : getField(r, 'FIN',    'MES FIN',    'MES DE FIN',    'MES_FIN',    'Fin',    'fin');
     const mesInicioNombre = toMonthName(rawInicio);
     const mesFinNombre    = toMonthName(rawFin);
     const mesFinNum       = toMonthNum(rawFin);
