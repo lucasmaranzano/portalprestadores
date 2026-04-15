@@ -8,7 +8,7 @@ let pagosData      = [];
 let autData        = null;
 let novedadesData  = [];
 let allPrestadores = [];
-let pdfBlobUrl     = null;
+let pdfBlobUrls    = [];
 
 let viewCuit   = null;
 let viewNombre = null;
@@ -111,7 +111,7 @@ function doLogout() {
   session = null; presData = []; pagosData = []; autData = null;
   novedadesData = []; allPrestadores = [];
   viewCuit = null; viewNombre = null;
-  if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); pdfBlobUrl = null; }
+  pdfBlobUrls.forEach(u => URL.revokeObjectURL(u)); pdfBlobUrls = [];
   localStorage.removeItem('ps_session');
   $('s-portal').classList.remove('active');
   $('s-login').classList.add('active');
@@ -366,26 +366,56 @@ async function abrirPDF(btn, nombre) {
   btn.disabled = true; btn.textContent = 'Cargando…';
   try {
     const res = await gasGet({action:'pdf', nombre, cuit: viewCuit, t: session.token});
-    if (res.ok && res.data) {
-      const bytes = Uint8Array.from(atob(res.data), c => c.charCodeAt(0));
-      const blob  = new Blob([bytes], {type:'application/pdf'});
-      if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
-      pdfBlobUrl = URL.createObjectURL(blob);
-      const dlName = res.nombre || nombre+'.pdf';
-      $('btn-dl').href = pdfBlobUrl;
-      $('btn-dl').setAttribute('download', dlName);
+    if (res.ok && res.archivos && res.archivos.length > 0) {
+      pdfBlobUrls.forEach(u => URL.revokeObjectURL(u));
+      pdfBlobUrls = [];
+
+      const archivos = res.archivos;
+      const total    = archivos.length;
+
       if (isMobile()) {
-        // En móvil: abrir en nueva pestaña (más compatible con iOS Safari)
-        window.open(pdfBlobUrl, '_blank');
+        // En móvil: abrir cada PDF en nueva pestaña (más compatible con iOS Safari)
+        archivos.forEach(archivo => {
+          const bytes = Uint8Array.from(atob(archivo.data), c => c.charCodeAt(0));
+          const blob  = new Blob([bytes], {type:'application/pdf'});
+          const url   = URL.createObjectURL(blob);
+          pdfBlobUrls.push(url);
+          window.open(url, '_blank');
+        });
       } else {
-        $('pdf-title').textContent = dlName;
-        $('pdf-frame').classList.add('hidden');
-        $('pdf-loading').style.display = 'flex';
+        $('pdf-title').textContent = total > 1
+          ? `${archivos[0].nombre} — ${total} archivos`
+          : archivos[0].nombre;
+
+        // Limpiar secciones previas y ocultar loading
+        document.querySelectorAll('#pdf-body .pdf-section').forEach(s => s.remove());
+        $('pdf-loading').style.display = 'none';
+
+        archivos.forEach((archivo, i) => {
+          const bytes = Uint8Array.from(atob(archivo.data), c => c.charCodeAt(0));
+          const blob  = new Blob([bytes], {type:'application/pdf'});
+          const url   = URL.createObjectURL(blob);
+          pdfBlobUrls.push(url);
+
+          const section = document.createElement('div');
+          section.className = total > 1 ? 'pdf-section pdf-section-multi' : 'pdf-section pdf-section-single';
+
+          const bar = document.createElement('div');
+          bar.className = 'pdf-section-bar';
+          const label = total > 1 ? `Archivo ${i + 1} de ${total}` : archivo.nombre;
+          bar.innerHTML = `<span class="pdf-section-label">${label}</span><a class="btn-dl" href="${url}" download="${archivo.nombre}">Descargar</a>`;
+          section.appendChild(bar);
+
+          const iframe = document.createElement('iframe');
+          iframe.className = 'pdf-frame';
+          iframe.src = url;
+          section.appendChild(iframe);
+
+          $('pdf-body').appendChild(section);
+        });
+
         $('pdf-overlay').classList.add('open');
         document.body.style.overflow = 'hidden';
-        $('pdf-frame').src = pdfBlobUrl;
-        $('pdf-loading').style.display = 'none';
-        $('pdf-frame').classList.remove('hidden');
       }
     } else {
       alert('No se encontró el comprobante: ' + (res.error || nombre));
@@ -397,8 +427,8 @@ async function abrirPDF(btn, nombre) {
 function cerrarPDF(e) {
   if (e && e.target !== $('pdf-overlay')) return;
   $('pdf-overlay').classList.remove('open');
-  $('pdf-frame').src = '';
-  $('pdf-frame').classList.add('hidden');
+  document.querySelectorAll('#pdf-body .pdf-section').forEach(s => s.remove());
+  $('pdf-loading').style.display = 'flex';
   document.body.style.overflow = '';
 }
 
