@@ -133,20 +133,15 @@
               </div>
               <div>
                 <label class="filter-label">Estado</label>
-                <select id="f-estado" onchange="renderPres()">
-                  <option value="">Todos los estados</option>
-                  <option>Pendiente</option>
-                  <option>Pagado</option>
-                  <option>Nota de credito</option>
-                </select>
+                <select id="f-estado" onchange="renderPres()"><option value="">Todos los estados</option></select>
               </div>
               <div>
                 <label class="filter-label">Obra social</label>
                 <select id="f-os" onchange="renderPres()"><option value="">Todas las obras sociales</option></select>
               </div>
               <div>
-                <label class="filter-label">Afiliado / CUIL</label>
-                <input type="text" id="f-q" placeholder="Buscar en todas las columnas…" oninput="renderPresDebounced()">
+                <label class="filter-label">Búsqueda general</label>
+                <input type="text" id="f-q" placeholder="Afiliado, obra social, monto, estado…" oninput="renderPresDebounced()">
               </div>
             </div>
             <button class="btn-clear-filters" onclick="limpiarFiltros()">Limpiar filtros</button>

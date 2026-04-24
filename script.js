@@ -21,7 +21,7 @@ const spin = v  => $('spinner').classList.toggle('hidden', !v);
 
 const debounce = (fn, delay) => { let to; return (...v) => { clearTimeout(to); to = setTimeout(() => fn(...v), delay); }; };
 const renderPresDebounced = debounce(() => renderPres(), 250);
-const renderAutorizadosDebounced = debounce(v => renderAutorizados(v), 250);
+const renderAutorizadosDebounced = debounce(() => renderAutorizados(), 250);
 const filtrarPrestadoresDebounced = debounce(() => filtrarPrestadores(), 250);
 
 async function gasGet(params) {
@@ -216,6 +216,13 @@ function poblarFiltros() {
   const obras = [...new Set(presData.map(r=>String(r.os).trim()).filter(Boolean))].sort();
   selOS.innerHTML = '<option value="">Todas las obras sociales</option>';
   obras.forEach(os => { const o=document.createElement('option'); o.value=os.toUpperCase(); o.textContent=os; selOS.appendChild(o); });
+
+  const selEst = $('f-estado');
+  const prev   = selEst.value;
+  const estados = [...new Set(presData.map(r=>String(r.estado).trim()).filter(Boolean))].sort();
+  selEst.innerHTML = '<option value="">Todos los estados</option>';
+  estados.forEach(e => { const o=document.createElement('option'); o.value=e; o.textContent=e; selEst.appendChild(o); });
+  if (prev) selEst.value = prev;
 }
 
 function renderPres() {
@@ -225,7 +232,7 @@ function renderPres() {
   const q   = $('f-q').value.toLowerCase();
   let rows  = presData;
   if (per) rows = rows.filter(r => r.periodo === per);
-  if (est) rows = rows.filter(r => String(r.estado).toLowerCase() === est.toLowerCase());
+  if (est) rows = rows.filter(r => String(r.estado).trim() === est);
   if (os)  rows = rows.filter(r => String(r.os).trim().toUpperCase() === os);
   if (q)   rows = rows.filter(r =>
     String(r.afiliado).toLowerCase().includes(q) ||
@@ -307,12 +314,39 @@ async function cargarAutorizados() {
     const res = await gasGet({action:'autorizados', cuit: viewCuit, t: session.token});
     if (res.ok) {
       autData = res.autorizados || [];
-      // Render the shell once (input + result containers) then fill results
       $('aut-content').innerHTML = `
-        <input type="text" class="auth-filter" id="aut-filter" placeholder="Buscar legajo o filtrar por estado…" oninput="renderAutorizadosDebounced(this.value)">
-        <div id="aut-summary"></div>
-        <div id="aut-grid"></div>`;
-      renderAutorizados('');
+        <div class="aut-layout">
+          <div>
+            <div class="sidebar-card">
+              <div class="sidebar-title">Filtros</div>
+              <div class="filter-group">
+                <div>
+                  <label class="filter-label">Estado</label>
+                  <select id="aut-f-estado" onchange="renderAutorizados()"><option value="">Todos los estados</option></select>
+                </div>
+                <div>
+                  <label class="filter-label">Obra social</label>
+                  <select id="aut-f-os" onchange="renderAutorizados()"><option value="">Todas las obras sociales</option></select>
+                </div>
+                <div>
+                  <label class="filter-label">Módulo</label>
+                  <select id="aut-f-modulo" onchange="renderAutorizados()"><option value="">Todos los módulos</option></select>
+                </div>
+                <div>
+                  <label class="filter-label">Búsqueda</label>
+                  <input type="text" id="aut-f-q" placeholder="Afiliado, CUIL…" oninput="renderAutorizadosDebounced()">
+                </div>
+              </div>
+              <button class="btn-clear-filters" onclick="limpiarFiltrosAut()">Limpiar filtros</button>
+            </div>
+          </div>
+          <div>
+            <div id="aut-summary"></div>
+            <div id="aut-grid"></div>
+          </div>
+        </div>`;
+      poblarFiltrosAut();
+      renderAutorizados();
     } else {
       $('aut-content').innerHTML = `<div class="auth-empty" style="color:var(--red)">Error al cargar: ${esc(res.error||'desconocido')}</div>`;
     }
@@ -321,7 +355,34 @@ async function cargarAutorizados() {
   }
 }
 
-function renderAutorizados(q) {
+function poblarFiltrosAut() {
+  const get = key => [...new Set(autData.map(r => String(r[key]||'').trim()).filter(Boolean))].sort();
+
+  const estados = get('ESTADO');
+  const selE = $('aut-f-estado');
+  selE.innerHTML = '<option value="">Todos los estados</option>';
+  estados.forEach(e => { const o=document.createElement('option'); o.value=e; o.textContent=e; selE.appendChild(o); });
+
+  const obras = [...new Set(autData.map(r => String(r['Obra social']||r['OBRA SOCIAL']||'').trim()).filter(Boolean))].sort();
+  const selOS = $('aut-f-os');
+  selOS.innerHTML = '<option value="">Todas las obras sociales</option>';
+  obras.forEach(os => { const o=document.createElement('option'); o.value=os; o.textContent=os; selOS.appendChild(o); });
+
+  const modulos = [...new Set(autData.map(r => String(r['MÓDULO']||r['MODULO']||'').trim()).filter(Boolean))].sort();
+  const selM = $('aut-f-modulo');
+  selM.innerHTML = '<option value="">Todos los módulos</option>';
+  modulos.forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; selM.appendChild(o); });
+}
+
+function limpiarFiltrosAut() {
+  if ($('aut-f-estado')) $('aut-f-estado').value = '';
+  if ($('aut-f-os'))     $('aut-f-os').value     = '';
+  if ($('aut-f-modulo')) $('aut-f-modulo').value  = '';
+  if ($('aut-f-q'))      $('aut-f-q').value       = '';
+  renderAutorizados();
+}
+
+function renderAutorizados() {
   if (!autData || !autData.length) {
     if ($('aut-grid')) {
       $('aut-summary').innerHTML = '';
@@ -331,10 +392,23 @@ function renderAutorizados(q) {
     }
     return;
   }
-  const txt = (q||'').toLowerCase();
-  let rows  = txt
-    ? autData.filter(r => String(r['afiliado']||'').toLowerCase().includes(txt) || String(r['ESTADO']||'').toLowerCase().includes(txt))
-    : autData;
+
+  const fEstado = $('aut-f-estado') ? $('aut-f-estado').value : '';
+  const fOS     = $('aut-f-os')     ? $('aut-f-os').value     : '';
+  const fModulo = $('aut-f-modulo') ? $('aut-f-modulo').value : '';
+  const fQ      = $('aut-f-q')      ? $('aut-f-q').value.toLowerCase() : '';
+
+  let rows = autData;
+  if (fEstado) rows = rows.filter(r => String(r['ESTADO']||'').trim() === fEstado);
+  if (fOS)     rows = rows.filter(r => (String(r['Obra social']||r['OBRA SOCIAL']||'').trim()) === fOS);
+  if (fModulo) rows = rows.filter(r => (String(r['MÓDULO']||r['MODULO']||'').trim()) === fModulo);
+  if (fQ)      rows = rows.filter(r =>
+    String(r['afiliado']||'').toLowerCase().includes(fQ)                    ||
+    String(r['NºCUIL']||r['CUIL']||'').toLowerCase().includes(fQ)           ||
+    String(r['ESTADO']||'').toLowerCase().includes(fQ)                      ||
+    String(r['Obra social']||r['OBRA SOCIAL']||'').toLowerCase().includes(fQ)||
+    String(r['MÓDULO']||r['MODULO']||'').toLowerCase().includes(fQ)
+  );
 
   rows = [...rows].sort((a,b) => {
     const ea = String(a['ESTADO']||'').toLowerCase();
@@ -399,7 +473,7 @@ function renderAutorizados(q) {
       <div class="auth-summary-txt"><strong>${autData.length}</strong> legajo${autData.length!==1?'s':''} · mostrando ${rows.length}</div>
       <div class="auth-badges">${badgesHTML}</div>
     </div>`;
-  $('aut-grid').innerHTML = cards || `<div class="auth-empty">Sin resultados para "${esc(q)}"</div>`;
+  $('aut-grid').innerHTML = cards || `<div class="auth-empty">Sin resultados para los filtros seleccionados.</div>`;
 }
 
 // ── PDF VIEWER ────────────────────────────────────────────
