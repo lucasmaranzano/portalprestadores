@@ -314,6 +314,12 @@ tbody tr:hover td { background: rgba(26,111,196,.03); }
 .btn-pdf { font-size: 12px; color: var(--blue); background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline; white-space: nowrap; font-weight: 600; transition: color .2s ease; }
 .btn-pdf:hover { color: var(--blue-dk); }
 .btn-pdf:disabled { color: var(--hint); cursor: wait; text-decoration: none; }
+.btn-portal-ext { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--teal); background: var(--teal-lt); border: 1.5px solid rgba(14,116,144,.3); border-radius: 99px; padding: 5px 13px; text-decoration: none; white-space: nowrap; letter-spacing: .2px; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.btn-portal-ext:hover { background: rgba(14,116,144,.18); border-color: var(--teal); transform: translateY(-1px); text-decoration: none; }
+.btn-portal-ext svg { flex-shrink: 0; }
+.td-portal-link { text-align: center; vertical-align: middle; }
+.btn-clear-filters { width: 100%; margin-top: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+.btn-clear-filters:hover { color: var(--blue); border-color: var(--blue); }
 .no-rows { text-align: center; padding: 3rem; color: var(--muted); font-size: 13px; }
 
 /* ── NOVEDADES (sidebar derecho) ─────────────────────────── */

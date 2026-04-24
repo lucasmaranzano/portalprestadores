@@ -155,8 +155,7 @@ async function cargarDatos() {
     if (res.ok) {
       presData  = res.presentaciones || [];
       pagosData = res.pagos          || [];
-      calcularMetricas();
-      poblarPeriodos();
+      poblarFiltros();
       renderPres();
     } else { alert('Error al cargar datos: ' + (res.error||'desconocido')); }
   } catch(e) { alert('Error de conexión al cargar datos.'); }
@@ -173,20 +172,24 @@ function swTab(name, btn) {
 }
 
 // ── MÉTRICAS ──────────────────────────────────────────────
-function calcularMetricas() {
-  const totalPresM = presData.reduce((s,r)=>s+(parseFloat(r.monto)||0), 0);
-  const cantPres   = presData.length;
-  const cantPag    = presData.filter(r=>String(r.estado).toLowerCase()==='pagado').length;
-  const cantPend   = presData.filter(r=>String(r.estado).toLowerCase()==='pendiente').length;
-  const cantNC     = presData.filter(r=>String(r.estadoOS||'').toUpperCase().includes('NOTA')).length;
+// Calcula y muestra métricas sobre el subconjunto `rows` de presData,
+// excluyendo siempre las filas de COBERTURA DE SALUD SA (se consultan aparte).
+function calcularMetricasFiltradas(rows) {
+  const isCob = r => String(r.os).trim().toUpperCase() === 'COBERTURA DE SALUD SA';
+  const contables = rows.filter(r => !isCob(r));
 
-  const totalPagM  = pagosData.reduce((s,r)=>s+(parseFloat(r.impSub)||0), 0);
-
-  // Monto de notas de crédito (se descuenta del pendiente, no se cobran)
-  const totalNCM   = presData
+  const totalPresM = contables.reduce((s,r) => s+(parseFloat(r.monto)||0), 0);
+  const cantPres   = contables.length;
+  const cantPag    = contables.filter(r => String(r.estado).toLowerCase()==='pagado').length;
+  const cantPend   = contables.filter(r => String(r.estado).toLowerCase()==='pendiente').length;
+  const cantNC     = contables.filter(r => String(r.estadoOS||'').toUpperCase().includes('NOTA')).length;
+  const totalNCM   = contables
     .filter(r => String(r.estado).toLowerCase().includes('nota'))
     .reduce((s,r) => s+(parseFloat(r.monto)||0), 0);
 
+  const totalPagM  = pagosData
+    .filter(r => !isCob(r))
+    .reduce((s,r) => s+(parseFloat(r.impSub)||0), 0);
   const totalPendM = totalPresM - totalPagM - totalNCM;
 
   $('m-pres-total').textContent = fmt(totalPresM);
@@ -199,38 +202,64 @@ function calcularMetricas() {
   $('m-nc').textContent         = cantNC;
 }
 
-function poblarPeriodos() {
+function poblarFiltros() {
   const sel  = $('f-periodo');
   const pers = [...new Set(presData.map(r=>r.periodo))].sort().reverse();
   sel.innerHTML = '<option value="">Todos los períodos</option>';
   pers.forEach(p => { const o=document.createElement('option'); o.value=p; o.textContent=fmtP(p); sel.appendChild(o); });
+
+  const selOS = $('f-os');
+  const obras = [...new Set(presData.map(r=>String(r.os).trim()).filter(Boolean))].sort();
+  selOS.innerHTML = '<option value="">Todas las obras sociales</option>';
+  obras.forEach(os => { const o=document.createElement('option'); o.value=os.toUpperCase(); o.textContent=os; selOS.appendChild(o); });
 }
 
 function renderPres() {
   const per = $('f-periodo').value;
   const est = $('f-estado').value;
+  const os  = $('f-os').value;
   const q   = $('f-q').value.toLowerCase();
   let rows  = presData;
   if (per) rows = rows.filter(r => r.periodo === per);
   if (est) rows = rows.filter(r => String(r.estado).toLowerCase() === est.toLowerCase());
+  if (os)  rows = rows.filter(r => String(r.os).trim().toUpperCase() === os);
   if (q)   rows = rows.filter(r => String(r.afiliado).toLowerCase().includes(q) || String(r.cuil).includes(q));
+
+  calcularMetricasFiltradas(rows);
 
   const tb = $('tbody-pres');
   if (!rows.length) { tb.innerHTML='<tr><td colspan="7" class="no-rows">Sin resultados para los filtros seleccionados</td></tr>'; return; }
-  tb.innerHTML = rows.map(r => `<tr>
-    <td><div class="aff-name">${esc(r.afiliado)||'—'}</div><div class="aff-cuil">${esc(r.cuil)}</div></td>
-    <td>${esc(r.os)||'—'}</td>
-    <td>${fmtP(r.periPrest)}</td>
-    <td>${esc(r.nroComp)||'—'}</td>
-    <td class="monto">${fmt(r.monto)}</td>
-    <td>${badge(r.estado)}</td>
-    <td>${String(r.os).trim().toUpperCase()==='COBERTURA DE SALUD SA'
-      ? `<a class="btn-portal-ext" href="https://borealprestadores.grupoboreal.ar/PortalPrestadores/com.portalpretadores.login" target="_blank" rel="noopener">CONSULTAR EN PORTAL COBERTURA</a>`
-      : String(r.estado).toLowerCase()==='pagado'
+  tb.innerHTML = rows.map(r => {
+    const isCob = String(r.os).trim().toUpperCase() === 'COBERTURA DE SALUD SA';
+    if (isCob) return `<tr>
+      <td><div class="aff-name">${esc(r.afiliado)||'—'}</div><div class="aff-cuil">${esc(r.cuil)}</div></td>
+      <td>${esc(r.os)||'—'}</td>
+      <td>${fmtP(r.periPrest)}</td>
+      <td>${esc(r.nroComp)||'—'}</td>
+      <td class="monto">—</td>
+      <td colspan="2" class="td-portal-link"><a class="btn-portal-ext" href="https://borealprestadores.grupoboreal.ar/PortalPrestadores/com.portalpretadores.login" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Consultar en Portal Cobertura</a></td>
+    </tr>`;
+    return `<tr>
+      <td><div class="aff-name">${esc(r.afiliado)||'—'}</div><div class="aff-cuil">${esc(r.cuil)}</div></td>
+      <td>${esc(r.os)||'—'}</td>
+      <td>${fmtP(r.periPrest)}</td>
+      <td>${esc(r.nroComp)||'—'}</td>
+      <td class="monto">${fmt(r.monto)}</td>
+      <td>${badge(r.estado)}</td>
+      <td>${String(r.estado).toLowerCase()==='pagado'
         ? `<button class="btn-pdf" onclick="abrirPDF(this,'${String(r.archivo).replace(/'/g,"\\'")}')">Ver comprobante</button>`
         : '<span style="color:var(--hint);font-size:12px">—</span>'
-    }</td>
-  </tr>`).join('');
+      }</td>
+    </tr>`;
+  }).join('');
+}
+
+function limpiarFiltros() {
+  $('f-periodo').value = '';
+  $('f-estado').value  = '';
+  $('f-os').value      = '';
+  $('f-q').value       = '';
+  renderPres();
 }
 
 // ── LEGAJOS AUTORIZADOS ───────────────────────────────────
@@ -553,7 +582,8 @@ async function adminVerPrestador(cuit, nombre) {
   pagosData  = [];
   $('f-periodo').innerHTML = '<option value="">Todos los períodos</option>';
   $('f-estado').value = '';
-  $('f-q').value = '';
+  $('f-os').value     = '';
+  $('f-q').value      = '';
   $('admin-banner-txt').textContent = 'Viendo: ' + nombre + ' (CUIT ' + cuit + ')';
   $('admin-banner').classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
