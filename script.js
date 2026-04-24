@@ -224,9 +224,11 @@ function renderPres() {
     <td>${esc(r.nroComp)||'—'}</td>
     <td class="monto">${fmt(r.monto)}</td>
     <td>${badge(r.estado)}</td>
-    <td>${String(r.estado).toLowerCase()==='pagado'
-      ? `<button class="btn-pdf" onclick="abrirPDF(this,'${String(r.archivo).replace(/'/g,"\\'")}')">Ver comprobante</button>`
-      : '<span style="color:var(--hint);font-size:12px">—</span>'
+    <td>${String(r.os).trim().toUpperCase()==='COBERTURA DE SALUD SA'
+      ? `<a class="btn-portal-ext" href="https://borealprestadores.grupoboreal.ar/PortalPrestadores/com.portalpretadores.login" target="_blank" rel="noopener">CONSULTAR EN PORTAL COBERTURA</a>`
+      : String(r.estado).toLowerCase()==='pagado'
+        ? `<button class="btn-pdf" onclick="abrirPDF(this,'${String(r.archivo).replace(/'/g,"\\'")}')">Ver comprobante</button>`
+        : '<span style="color:var(--hint);font-size:12px">—</span>'
     }</td>
   </tr>`).join('');
 }
