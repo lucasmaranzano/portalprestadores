@@ -187,9 +187,13 @@ function calcularMetricasFiltradas(rows) {
     .filter(r => String(r.estado).toLowerCase().includes('nota'))
     .reduce((s,r) => s+(parseFloat(r.monto)||0), 0);
 
-  const totalPagM  = pagosData
-    .filter(r => !isCob(r))
-    .reduce((s,r) => s+(parseFloat(r.impSub)||0), 0);
+  let totalPagM = 0;
+  if (contables.length > 0) {
+    const nroCompSet = new Set(contables.map(r => String(r.nroComp).trim()).filter(Boolean));
+    totalPagM = pagosData
+      .filter(r => !isCob(r) && (nroCompSet.size === 0 || nroCompSet.has(String(r.nroComp).trim())))
+      .reduce((s,r) => s+(parseFloat(r.impSub)||0), 0);
+  }
   const totalPendM = totalPresM - totalPagM - totalNCM;
 
   $('m-pres-total').textContent = fmt(totalPresM);
