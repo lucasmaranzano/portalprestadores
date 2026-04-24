@@ -223,7 +223,15 @@ function renderPres() {
   if (per) rows = rows.filter(r => r.periodo === per);
   if (est) rows = rows.filter(r => String(r.estado).toLowerCase() === est.toLowerCase());
   if (os)  rows = rows.filter(r => String(r.os).trim().toUpperCase() === os);
-  if (q)   rows = rows.filter(r => String(r.afiliado).toLowerCase().includes(q) || String(r.cuil).includes(q));
+  if (q)   rows = rows.filter(r =>
+    String(r.afiliado).toLowerCase().includes(q) ||
+    String(r.cuil).toLowerCase().includes(q)     ||
+    String(r.os).toLowerCase().includes(q)        ||
+    String(r.periPrest).toLowerCase().includes(q) ||
+    String(r.nroComp).toLowerCase().includes(q)   ||
+    String(r.monto).toLowerCase().includes(q)     ||
+    String(r.estado).toLowerCase().includes(q)
+  );
 
   calcularMetricasFiltradas(rows);
 
@@ -236,7 +244,7 @@ function renderPres() {
       <td>${esc(r.os)||'—'}</td>
       <td>${fmtP(r.periPrest)}</td>
       <td>${esc(r.nroComp)||'—'}</td>
-      <td class="monto">—</td>
+      <td class="monto">${fmt(r.monto)}</td>
       <td colspan="2" class="td-portal-link"><a class="btn-portal-ext" href="https://borealprestadores.grupoboreal.ar/PortalPrestadores/com.portalpretadores.login" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Consultar en Portal Cobertura</a></td>
     </tr>`;
     return `<tr>
