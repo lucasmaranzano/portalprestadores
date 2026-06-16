@@ -280,6 +280,29 @@ body {
   border-bottom: 1px dashed var(--border);
 }
 .filter-prestador .filter-label { color: var(--blue); }
+.prestador-combo { position: relative; }
+.prestador-combo-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+.prestador-combo-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.prestador-combo-item:last-child { border-bottom: none; }
+.prestador-combo-item:hover { background: rgba(19,68,132,.07); }
+.prestador-combo-nombre { font-size: 13px; font-weight: 600; color: var(--text); }
+.prestador-combo-cuit { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.prestador-combo-empty { padding: 10px; font-size: 12px; color: var(--muted); text-align: center; }
 .filter-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; display: block; }
 .filter-group select,
 .filter-group input {

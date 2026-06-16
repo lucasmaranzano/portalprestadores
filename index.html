@@ -129,9 +129,11 @@
             <div class="filter-group">
               <div class="filter-prestador hidden" id="f-prestador-wrap">
                 <label class="filter-label">Prestador</label>
-                <select id="f-prestador" onchange="auditorSelectPrestador(this.value)">
-                  <option value="">Seleccioná un prestador…</option>
-                </select>
+                <div class="prestador-combo" id="f-prestador-combo">
+                  <input type="text" id="f-prestador-input" class="prestador-combo-input" placeholder="Buscá por nombre o CUIT…" autocomplete="off"
+                         oninput="filtrarComboPrestador('f-prestador')" onfocus="filtrarComboPrestador('f-prestador')" onkeydown="comboKeydown(event,'f-prestador')">
+                  <div class="prestador-combo-list hidden" id="f-prestador-list"></div>
+                </div>
               </div>
               <div>
                 <label class="filter-label">Período</label>

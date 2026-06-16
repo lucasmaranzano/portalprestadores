@@ -657,35 +657,80 @@ async function eliminarNovedad(id) {
   } catch(e) { alert('Error de conexión.'); }
 }
 
-// ── AUDITOR: selector de prestador ────────────────────────
-// Devuelve el bloque <div> del filtro "Prestador" solo si la sesión es de
-// un auditor; en cualquier otro caso devuelve cadena vacía.
-function prestadorFilterHTML(selectId) {
+// ── AUDITOR: buscador de prestador (combobox en tiempo real) ──
+// Devuelve el bloque del combobox "Prestador" solo si la sesión es de un
+// auditor; en cualquier otro caso devuelve cadena vacía. `baseId` se usa
+// como prefijo para los ids del input y la lista de resultados.
+function prestadorFilterHTML(baseId) {
   if (!session || !session.isAuditor) return '';
   return `<div class="filter-prestador">
     <label class="filter-label">Prestador</label>
-    <select id="${selectId}" onchange="auditorSelectPrestador(this.value)">
-      <option value="">Seleccioná un prestador…</option>
-    </select>
+    <div class="prestador-combo" id="${baseId}-combo">
+      <input type="text" id="${baseId}-input" class="prestador-combo-input" placeholder="Buscá por nombre o CUIT…" autocomplete="off"
+             oninput="filtrarComboPrestador('${baseId}')" onfocus="filtrarComboPrestador('${baseId}')" onkeydown="comboKeydown(event,'${baseId}')">
+      <div class="prestador-combo-list hidden" id="${baseId}-list"></div>
+    </div>
   </div>`;
 }
 
-// Rellena los <select> de prestador (Presentaciones y Legajos) con la lista
-// completa, preservando el prestador actualmente seleccionado.
+// Sincroniza el texto visible de ambos buscadores con el prestador elegido.
 function poblarPrestadoresAuditor() {
-  if (!session || !session.isAuditor || !allPrestadores) return;
-  const opts = '<option value="">Seleccioná un prestador…</option>' +
-    allPrestadores.map(p => `<option value="${esc(p.cuit)}">${esc(p.nombre)} — ${esc(p.cuit)}</option>`).join('');
-  const sel = (viewCuit && viewCuit !== session.cuit) ? viewCuit : '';
-  ['f-prestador', 'aut-f-prestador'].forEach(id => {
+  if (!session || !session.isAuditor) return;
+  const p = (viewCuit && viewCuit !== session.cuit)
+    ? (allPrestadores || []).find(x => x.cuit === viewCuit)
+    : null;
+  const txt = p ? p.nombre : '';
+  ['f-prestador-input', 'aut-f-prestador-input'].forEach(id => {
     const el = $(id);
-    if (el) { el.innerHTML = opts; el.value = sel; }
+    if (el) el.value = txt;
   });
+}
+
+// Filtra la lista mientras el auditor escribe y la muestra debajo del input.
+function filtrarComboPrestador(baseId) {
+  const input = $(baseId + '-input');
+  const list  = $(baseId + '-list');
+  if (!input || !list) return;
+  const q = input.value.trim().toLowerCase();
+  const matches = (q
+    ? (allPrestadores || []).filter(p =>
+        p.nombre.toLowerCase().includes(q) || String(p.cuit).toLowerCase().includes(q))
+    : (allPrestadores || [])
+  ).slice(0, 50);
+
+  if (!matches.length) {
+    list.innerHTML = '<div class="prestador-combo-empty">Sin resultados</div>';
+  } else {
+    list.innerHTML = matches.map(p =>
+      `<div class="prestador-combo-item" data-cuit="${esc(p.cuit)}" onmousedown="seleccionarComboPrestador('${baseId}','${esc(p.cuit)}')">
+        <div class="prestador-combo-nombre">${esc(p.nombre)}</div>
+        <div class="prestador-combo-cuit">CUIT ${esc(p.cuit)}</div>
+      </div>`).join('');
+  }
+  list.classList.remove('hidden');
+}
+
+// Click sobre un resultado del combobox.
+function seleccionarComboPrestador(baseId, cuit) {
+  document.querySelectorAll('.prestador-combo-list').forEach(l => l.classList.add('hidden'));
+  auditorSelectPrestador(cuit);
+}
+
+// Enter selecciona el primer resultado; Escape cierra la lista.
+function comboKeydown(e, baseId) {
+  const list = $(baseId + '-list');
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const first = list && list.querySelector('.prestador-combo-item');
+    if (first) seleccionarComboPrestador(baseId, first.dataset.cuit);
+  } else if (e.key === 'Escape') {
+    if (list) list.classList.add('hidden');
+  }
 }
 
 // El auditor elige un prestador → carga sus Presentaciones y Legajos.
 async function auditorSelectPrestador(cuit) {
-  const p = allPrestadores.find(x => x.cuit === cuit);
+  const p = (allPrestadores || []).find(x => x.cuit === cuit);
   viewCuit   = cuit || session.cuit;
   viewNombre = p ? p.nombre : session.nombre;
   autData = null; presData = []; pagosData = [];
@@ -693,9 +738,9 @@ async function auditorSelectPrestador(cuit) {
   $('f-estado').value = '';
   $('f-os').value     = '';
   $('f-q').value      = '';
-  // Mantener ambos selectores sincronizados
-  if ($('f-prestador'))     $('f-prestador').value     = cuit;
-  if ($('aut-f-prestador')) $('aut-f-prestador').value = cuit;
+  // Mantener el texto de ambos buscadores sincronizado
+  const txt = p ? p.nombre : '';
+  ['f-prestador-input', 'aut-f-prestador-input'].forEach(id => { if ($(id)) $(id).value = txt; });
   if (!cuit) {
     renderPres();           // presData vacío → "Sin resultados"
     if ($('aut-grid')) renderAutorizados();
@@ -770,6 +815,13 @@ function volverAdmin() {
 // Enter en login
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && $('s-login').classList.contains('active')) doLogin();
+});
+
+// Cerrar la lista del buscador de prestador al hacer clic fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.prestador-combo')) {
+    document.querySelectorAll('.prestador-combo-list').forEach(l => l.classList.add('hidden'));
+  }
 });
 
 // ── Restaurar sesión al recargar ───────────────────────────
