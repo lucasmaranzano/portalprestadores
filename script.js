@@ -89,13 +89,14 @@ async function doLogin() {
   try {
     const res = await gasGet({action:'login', u, p});
     if (res.ok) {
-      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin, loginAt:Date.now()};
+      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin, isAuditor:!!res.isAuditor, loginAt:Date.now()};
       localStorage.setItem('ps_session', JSON.stringify(session));
       viewCuit   = session.cuit;
       viewNombre = session.nombre;
       mostrarPortal();
       await Promise.all([cargarDatos(), cargarNovedades(), cargarAutorizados()]);
       if (session.isAdmin) await cargarPrestadores();
+      else if (session.isAuditor) { await cargarPrestadores(); poblarPrestadoresAuditor(); }
     } else {
       $('field-u').classList.add('error');
       $('field-p').classList.add('error');
@@ -141,10 +142,20 @@ function mostrarPortal() {
     $('av').classList.add('admin');
     $('tab-admin').classList.remove('hidden');
     $('nov-form-sidebar').classList.remove('hidden');
+    $('f-prestador-wrap').classList.add('hidden');
+  } else if (session.isAuditor) {
+    // Auditor: sin Panel Admin ni formulario de novedades, pero con
+    // selector de prestador en Presentaciones y Legajos autorizados.
+    $('av').classList.add('admin');
+    $('tab-admin').classList.add('hidden');
+    $('nov-form-sidebar').classList.add('hidden');
+    $('f-prestador-wrap').classList.remove('hidden');
+    $('tb-cuit').textContent = 'Auditor';
   } else {
     $('av').classList.remove('admin');
     $('tab-admin').classList.add('hidden');
     $('nov-form-sidebar').classList.add('hidden');
+    $('f-prestador-wrap').classList.add('hidden');
   }
 }
 
@@ -225,7 +236,17 @@ function poblarFiltros() {
   if (prev) selEst.value = prev;
 }
 
+// True si la sesión es de un auditor que todavía no eligió un prestador.
+function auditorSinPrestador() {
+  return !!(session && session.isAuditor && (!viewCuit || viewCuit === session.cuit));
+}
+
 function renderPres() {
+  if (auditorSinPrestador()) {
+    calcularMetricasFiltradas([]);
+    $('tbody-pres').innerHTML = '<tr><td colspan="7" class="no-rows">Seleccioná un prestador para ver sus presentaciones.</td></tr>';
+    return;
+  }
   const per = $('f-periodo').value;
   const est = $('f-estado').value;
   const os  = $('f-os').value;
@@ -320,6 +341,7 @@ async function cargarAutorizados() {
             <div class="sidebar-card">
               <div class="sidebar-title">Filtros</div>
               <div class="filter-group">
+                ${prestadorFilterHTML('aut-f-prestador')}
                 <div>
                   <label class="filter-label">Estado</label>
                   <select id="aut-f-estado" onchange="renderAutorizados()"><option value="">Todos los estados</option></select>
@@ -345,6 +367,7 @@ async function cargarAutorizados() {
             <div id="aut-grid"></div>
           </div>
         </div>`;
+      poblarPrestadoresAuditor();
       poblarFiltrosAut();
       renderAutorizados();
     } else {
@@ -383,6 +406,13 @@ function limpiarFiltrosAut() {
 }
 
 function renderAutorizados() {
+  if (auditorSinPrestador()) {
+    if ($('aut-summary')) $('aut-summary').innerHTML = '';
+    const msg = '<div class="auth-empty">Seleccioná un prestador para ver sus legajos autorizados.</div>';
+    if ($('aut-grid')) $('aut-grid').innerHTML = msg;
+    else $('aut-content').innerHTML = msg;
+    return;
+  }
   if (!autData || !autData.length) {
     if ($('aut-grid')) {
       $('aut-summary').innerHTML = '';
@@ -627,6 +657,53 @@ async function eliminarNovedad(id) {
   } catch(e) { alert('Error de conexión.'); }
 }
 
+// ── AUDITOR: selector de prestador ────────────────────────
+// Devuelve el bloque <div> del filtro "Prestador" solo si la sesión es de
+// un auditor; en cualquier otro caso devuelve cadena vacía.
+function prestadorFilterHTML(selectId) {
+  if (!session || !session.isAuditor) return '';
+  return `<div class="filter-prestador">
+    <label class="filter-label">Prestador</label>
+    <select id="${selectId}" onchange="auditorSelectPrestador(this.value)">
+      <option value="">Seleccioná un prestador…</option>
+    </select>
+  </div>`;
+}
+
+// Rellena los <select> de prestador (Presentaciones y Legajos) con la lista
+// completa, preservando el prestador actualmente seleccionado.
+function poblarPrestadoresAuditor() {
+  if (!session || !session.isAuditor || !allPrestadores) return;
+  const opts = '<option value="">Seleccioná un prestador…</option>' +
+    allPrestadores.map(p => `<option value="${esc(p.cuit)}">${esc(p.nombre)} — ${esc(p.cuit)}</option>`).join('');
+  const sel = (viewCuit && viewCuit !== session.cuit) ? viewCuit : '';
+  ['f-prestador', 'aut-f-prestador'].forEach(id => {
+    const el = $(id);
+    if (el) { el.innerHTML = opts; el.value = sel; }
+  });
+}
+
+// El auditor elige un prestador → carga sus Presentaciones y Legajos.
+async function auditorSelectPrestador(cuit) {
+  const p = allPrestadores.find(x => x.cuit === cuit);
+  viewCuit   = cuit || session.cuit;
+  viewNombre = p ? p.nombre : session.nombre;
+  autData = null; presData = []; pagosData = [];
+  $('f-periodo').innerHTML = '<option value="">Todos los períodos</option>';
+  $('f-estado').value = '';
+  $('f-os').value     = '';
+  $('f-q').value      = '';
+  // Mantener ambos selectores sincronizados
+  if ($('f-prestador'))     $('f-prestador').value     = cuit;
+  if ($('aut-f-prestador')) $('aut-f-prestador').value = cuit;
+  if (!cuit) {
+    renderPres();           // presData vacío → "Sin resultados"
+    if ($('aut-grid')) renderAutorizados();
+    return;
+  }
+  await Promise.all([cargarDatos(), cargarAutorizados()]);
+}
+
 // ── ADMIN: PRESTADORES ────────────────────────────────────
 async function cargarPrestadores() {
   try {
@@ -714,6 +791,7 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
     spin(true);
     await Promise.all([cargarDatos(), cargarNovedades(), cargarAutorizados()]);
     if (session.isAdmin) await cargarPrestadores();
+    else if (session.isAuditor) { await cargarPrestadores(); poblarPrestadoresAuditor(); }
     spin(false);
   } catch(e) {
     localStorage.removeItem('ps_session');

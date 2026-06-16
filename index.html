@@ -127,6 +127,12 @@
           <div class="sidebar-card">
             <div class="sidebar-title">Filtros</div>
             <div class="filter-group">
+              <div class="filter-prestador hidden" id="f-prestador-wrap">
+                <label class="filter-label">Prestador</label>
+                <select id="f-prestador" onchange="auditorSelectPrestador(this.value)">
+                  <option value="">Seleccioná un prestador…</option>
+                </select>
+              </div>
               <div>
                 <label class="filter-label">Período</label>
                 <select id="f-periodo" onchange="renderPres()"><option value="">Todos los períodos</option></select>
