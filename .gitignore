@@ -1,5 +1,12 @@
-# Backend Google Apps Script — solo referencia local, no se sube
-code.gs
+# Credenciales de clasp — NUNCA subir (dan acceso a tu Apps Script)
+.clasprc.json
+
+# Backend Apps Script (se despliega con clasp, NO va a GitHub)
+code.js
+appsscript.json
+.clasp.json
+.claspignore
+package.json
 
 # Config local de Claude
 .claude/
