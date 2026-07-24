@@ -24,9 +24,33 @@ const renderPresDebounced = debounce(() => renderPres(), 250);
 const renderAutorizadosDebounced = debounce(() => renderAutorizados(), 250);
 const filtrarPrestadoresDebounced = debounce(() => filtrarPrestadores(), 250);
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Acciones de escritura no idempotentes: NO reintentar (evita duplicados si el
+// server ya procesó el pedido pero se perdió la respuesta).
+const GAS_NO_RETRY = new Set(['setNovedad']);
+
+// Reintento con backoff: en picos de concurrencia Apps Script puede rebotar el
+// pedido ("too many simultaneous invocations") o devolver HTML de error en vez
+// de JSON. Reintentamos con esperas crecientes (~0,6s, ~1,1s, ~2,1s) para que
+// esos fallos transitorios sean invisibles para el prestador. En el caso normal
+// (éxito al primer intento) el comportamiento es idéntico al de antes.
 async function gasGet(params) {
-  const res = await fetch(GAS_URL+'?'+new URLSearchParams(params).toString(), {redirect:'follow'});
-  return res.json();
+  const url = GAS_URL+'?'+new URLSearchParams(params).toString();
+  const maxRetries = GAS_NO_RETRY.has(params.action) ? 0 : 3;
+  let lastErr;
+  for (let intento = 0; intento <= maxRetries; intento++) {
+    try {
+      const res = await fetch(url, {redirect:'follow'});
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      return await res.json();
+    } catch (err) {
+      lastErr = err;
+      if (intento === maxRetries) break;
+      await sleep(500 * Math.pow(2, intento) + Math.floor(Math.random() * 300));
+    }
+  }
+  throw lastErr;
 }
 
 function badge(estado) {
