@@ -311,7 +311,7 @@ function renderPres() {
       <td class="monto">${fmt(r.monto)}</td>
       <td>${badge(r.estado)}</td>
       <td>${String(r.estado).toLowerCase()==='pagado'
-        ? `<button class="btn-pdf" onclick="abrirPDF(this,'${String(r.archivo).replace(/'/g,"\\'")}')">Ver comprobante</button>`
+        ? `<button class="btn-pdf" onclick="abrirPDF(this,'${String(r.archivo).replace(/'/g,"\\'")}','${String(r.nroComp||'').replace(/'/g,"\\'")}')">Ver comprobante</button>`
         : '<span style="color:var(--hint);font-size:12px">—</span>'
       }</td>
     </tr>`;
@@ -533,8 +533,22 @@ function renderAutorizados() {
 // ── PDF VIEWER ────────────────────────────────────────────
 const isMobile = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches || window.innerWidth <= 700;
 
-async function abrirPDF(btn, nombre) {
-  btn.disabled = true; btn.textContent = 'Cargando…';
+// nombre de descarga: "archivo.pdf" + nroComp -> "archivo_1234.pdf"
+function nombreDescarga(nombre, nroComp) {
+  if (!nroComp) return nombre;
+  const suf = '_' + String(nroComp).trim().replace(/[\\/:*?"<>|]/g, '-');
+  const i = nombre.lastIndexOf('.');
+  return i > 0 ? nombre.slice(0, i) + suf + nombre.slice(i) : nombre + suf;
+}
+
+// ponytail: lock global — solo un PDF en vuelo a la vez
+let pdfCargando = false;
+
+async function abrirPDF(btn, nombre, nroComp) {
+  if (pdfCargando) return;
+  pdfCargando = true;
+  document.querySelectorAll('.btn-pdf').forEach(b => b.disabled = true);
+  btn.textContent = 'Cargando…';
   try {
     const res = await gasGet({action:'pdf', nombre, cuit: viewCuit, t: session.token});
     if (res.ok && res.archivos && res.archivos.length > 0) {
@@ -574,7 +588,7 @@ async function abrirPDF(btn, nombre) {
           const bar = document.createElement('div');
           bar.className = 'pdf-section-bar';
           const label = total > 1 ? `Archivo ${i + 1} de ${total}` : archivo.nombre;
-          bar.innerHTML = `<span class="pdf-section-label">${label}</span><a class="btn-dl" href="${url}" download="${archivo.nombre}">Descargar</a>`;
+          bar.innerHTML = `<span class="pdf-section-label">${label}</span><a class="btn-dl" href="${url}" download="${nombreDescarga(archivo.nombre, nroComp)}">Descargar</a>`;
           section.appendChild(bar);
 
           const iframe = document.createElement('iframe');
@@ -592,7 +606,8 @@ async function abrirPDF(btn, nombre) {
       alert('No se encontró el comprobante: ' + (res.error || nombre));
     }
   } catch(e) { alert('Error de conexión al buscar el comprobante.'); }
-  btn.disabled = false; btn.textContent = 'Ver comprobante';
+  pdfCargando = false;
+  document.querySelectorAll('.btn-pdf').forEach(b => { b.disabled = false; b.textContent = 'Ver comprobante'; });
 }
 
 function cerrarPDF(e) {
