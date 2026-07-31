@@ -53,6 +53,24 @@ async function gasGet(params) {
   throw lastErr;
 }
 
+// POST para subir archivos (novedades). No sirve GET por el límite de URL.
+// El cuerpo va como texto plano (JSON) para evitar el preflight CORS.
+async function gasPost(payload) {
+  const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload), redirect:'follow' });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+
+// Lee un File como base64 (sin el prefijo "data:...,").
+function fileABase64(file) {
+  return new Promise((resolve, reject) => {
+    const rd = new FileReader();
+    rd.onload  = () => resolve(String(rd.result).split(',')[1] || '');
+    rd.onerror = () => reject(rd.error);
+    rd.readAsDataURL(file);
+  });
+}
+
 function badge(estado) {
   const e = String(estado||'').trim().toLowerCase();
   if (e==='pagado')       return `<span class="badge badge-pagado">Pagado</span>`;
@@ -113,7 +131,7 @@ async function doLogin() {
   try {
     const res = await gasGet({action:'login', u, p});
     if (res.ok) {
-      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin, isAuditor:!!res.isAuditor, loginAt:Date.now()};
+      session = {cuit:res.cuit, nombre:res.nombre, token:res.token, isAdmin:!!res.isAdmin, isAuditor:!!res.isAuditor, legajosEnabled: res.legajosEnabled !== false, loginAt:Date.now()};
       localStorage.setItem('ps_session', JSON.stringify(session));
       viewCuit   = session.cuit;
       viewNombre = session.nombre;
@@ -181,6 +199,39 @@ function mostrarPortal() {
     $('nov-form-sidebar').classList.add('hidden');
     $('f-prestador-wrap').classList.add('hidden');
   }
+  // Mostrar/ocultar "Legajos autorizados" según config y rol.
+  aplicarVisibilidadLegajos();
+  // Reflejar el estado en el switch del panel admin.
+  if (session.isAdmin) { const cb = $('cfg-legajos'); if (cb) cb.checked = session.legajosEnabled !== false; }
+}
+
+// Muestra la pestaña "Legajos autorizados" si está habilitada por config, o si el
+// usuario es admin/auditor (que la ven siempre para gestionar/previsualizar).
+function aplicarVisibilidadLegajos() {
+  const ver = !!session && (session.isAdmin || session.isAuditor || session.legajosEnabled !== false);
+  $('tab-aut').classList.toggle('hidden', !ver);
+  // Si quedó oculta con su panel activo, volver a Presentaciones.
+  if (!ver && $('panel-aut').classList.contains('active')) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const t0 = document.querySelector('.tab'); if (t0) t0.classList.add('active');
+    $('panel-pres').classList.add('active');
+  }
+}
+
+// Switch del panel admin: prende/apaga la pestaña Legajos para los prestadores.
+async function toggleLegajos(checked) {
+  const cb = $('cfg-legajos');
+  cb.disabled = true;
+  try {
+    const res = await gasGet({action:'setLegajos', v: checked ? 1 : 0, t: session.token});
+    if (res.ok) {
+      session.legajosEnabled = checked;
+      localStorage.setItem('ps_session', JSON.stringify(session));
+      aplicarVisibilidadLegajos();
+    } else { alert('Error: ' + (res.error || 'desconocido')); cb.checked = !checked; }
+  } catch(e) { alert('Error de conexión.'); cb.checked = !checked; }
+  cb.disabled = false;
 }
 
 async function cargarDatos() {
@@ -549,6 +600,18 @@ async function abrirPDF(btn, nombre, nroComp) {
   pdfCargando = true;
   document.querySelectorAll('.btn-pdf').forEach(b => b.disabled = true);
   btn.textContent = 'Cargando…';
+
+  const mobile = isMobile();
+  if (!mobile) {
+    // Abrir el modal YA con la pantalla de carga: bloquea la pantalla e indica
+    // claramente que hay que esperar. Reusa #pdf-loading.
+    $('pdf-title').textContent = 'Comprobante de pago';
+    document.querySelectorAll('#pdf-body .pdf-section').forEach(s => s.remove());
+    $('pdf-loading').style.display = 'flex';
+    $('pdf-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
   try {
     const res = await gasGet({action:'pdf', nombre, cuit: viewCuit, t: session.token});
     if (res.ok && res.archivos && res.archivos.length > 0) {
@@ -558,7 +621,7 @@ async function abrirPDF(btn, nombre, nroComp) {
       const archivos = res.archivos;
       const total    = archivos.length;
 
-      if (isMobile()) {
+      if (mobile) {
         // En móvil: abrir cada PDF en nueva pestaña (más compatible con iOS Safari)
         archivos.forEach(archivo => {
           const bytes = Uint8Array.from(atob(archivo.data), c => c.charCodeAt(0));
@@ -603,9 +666,13 @@ async function abrirPDF(btn, nombre, nroComp) {
         document.body.style.overflow = 'hidden';
       }
     } else {
+      if (!mobile) cerrarPDF();
       alert('No se encontró el comprobante: ' + (res.error || nombre));
     }
-  } catch(e) { alert('Error de conexión al buscar el comprobante.'); }
+  } catch(e) {
+    if (!mobile) cerrarPDF();
+    alert('Error de conexión al buscar el comprobante.');
+  }
   pdfCargando = false;
   document.querySelectorAll('.btn-pdf').forEach(b => { b.disabled = false; b.textContent = 'Ver comprobante'; });
 }
@@ -648,6 +715,7 @@ function renderNovedadesSidebar() {
       </div>
       <div class="novedad-fecha">${esc(n.fecha)}</div>
       ${n.cuerpo ? `<div class="novedad-cuerpo" style="margin-top:5px">${esc(n.cuerpo)}</div>` : ''}
+      ${n.archivoNombre ? `<button class="btn-nov-dl" onclick="descargarNovedad('${esc(n.id)}', this)" title="Descargar adjunto"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${esc(n.archivoNombre)}</span></button>` : ''}
     </div>`).join('');
 }
 
@@ -663,28 +731,69 @@ function renderNovedadesAdmin() {
         <div class="admin-nov-titulo">${esc(n.titulo)}</div>
         <div class="admin-nov-fecha">${esc(n.fecha)}</div>
         ${n.cuerpo ? `<div class="admin-nov-cuerpo">${esc(n.cuerpo)}</div>` : ''}
+        ${n.archivoNombre ? `<button class="btn-nov-dl" onclick="descargarNovedad('${esc(n.id)}', this)" title="Descargar adjunto"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${esc(n.archivoNombre)}</span></button>` : ''}
       </div>
       <button class="btn-del-nov2" onclick="eliminarNovedad('${esc(n.id)}')">Eliminar</button>
     </div>`).join('');
 }
 
+const NOV_MAX_BYTES = 15 * 1024 * 1024; // 15 MB por archivo
+
 async function addNovedad(src) {
   const tituloId = src==='s' ? 'nov-titulo-s' : 'nov-titulo-a';
   const cuerpoId = src==='s' ? 'nov-cuerpo-s' : 'nov-cuerpo-a';
+  const fileId   = src==='s' ? 'nov-file-s'   : 'nov-file-a';
   const btnId    = src==='s' ? 'btn-add-nov-s' : 'btn-add-nov-a';
   const titulo   = $(tituloId).value.trim();
   const cuerpo   = $(cuerpoId).value.trim();
   if (!titulo) { alert('El título es requerido.'); return; }
-  $(btnId).disabled = true;
+
+  const fileInput = $(fileId);
+  const file = fileInput && fileInput.files && fileInput.files[0];
+  if (file && file.size > NOV_MAX_BYTES) { alert('El archivo supera el límite de 15 MB.'); return; }
+
+  const btn = $(btnId);
+  const btnTxt = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = file ? 'Subiendo…' : 'Publicando…';
   try {
-    const res = await gasGet({action:'setNovedad', titulo, cuerpo, t: session.token});
+    let res;
+    if (file) {
+      const data = await fileABase64(file);
+      res = await gasPost({action:'setNovedad', titulo, cuerpo, t: session.token,
+        archivo: {nombre: file.name, mime: file.type, data}});
+    } else {
+      res = await gasGet({action:'setNovedad', titulo, cuerpo, t: session.token});
+    }
     if (res.ok) {
       $(tituloId).value = '';
       $(cuerpoId).value = '';
+      if (fileInput) fileInput.value = '';
       await cargarNovedades();
     } else { alert('Error: ' + (res.error||'desconocido')); }
   } catch(e) { alert('Error de conexión.'); }
-  $(btnId).disabled = false;
+  btn.disabled = false;
+  btn.textContent = btnTxt;
+}
+
+// Descarga el adjunto de una novedad (se pide por ID de novedad; el backend
+// resuelve el archivo de Drive).
+async function descargarNovedad(id, btn) {
+  const txt = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Descargando…';
+  try {
+    const res = await gasGet({action:'novedadFile', id, t: session.token});
+    if (res.ok && res.data) {
+      const bytes = Uint8Array.from(atob(res.data), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], {type: res.mime || 'application/octet-stream'});
+      const url   = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = res.nombre || 'archivo';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+    } else { alert('Error: ' + (res.error || 'no se pudo descargar')); }
+  } catch(e) { alert('Error de conexión al descargar.'); }
+  btn.disabled = false; btn.textContent = txt;
 }
 
 async function eliminarNovedad(id) {
@@ -879,6 +988,15 @@ const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
     viewCuit   = s.cuit;
     viewNombre = s.nombre;
     mostrarPortal();
+    // Refrescar config por si el admin cambió la visibilidad de Legajos (no bloquea).
+    gasGet({action:'config', t: session.token}).then(c => {
+      if (c && c.ok) {
+        session.legajosEnabled = c.legajosEnabled;
+        localStorage.setItem('ps_session', JSON.stringify(session));
+        aplicarVisibilidadLegajos();
+        if (session.isAdmin) { const cb = $('cfg-legajos'); if (cb) cb.checked = c.legajosEnabled; }
+      }
+    }).catch(()=>{});
     spin(true);
     await Promise.all([cargarDatos(), cargarNovedades(), cargarAutorizados()]);
     if (session.isAdmin) await cargarPrestadores();

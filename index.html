@@ -180,6 +180,9 @@
             <div class="nov-form hidden" id="nov-form-sidebar">
               <input type="text" id="nov-titulo-s" placeholder="Título de la novedad" maxlength="100">
               <textarea id="nov-cuerpo-s" rows="3" placeholder="Texto de la novedad…"></textarea>
+              <label class="nov-file-label">Adjuntar archivo (opcional, máx. 15 MB)
+                <input type="file" id="nov-file-s" class="nov-file">
+              </label>
               <button class="btn-add-nov" id="btn-add-nov-s" onclick="addNovedad('s')">Publicar novedad</button>
             </div>
             <div class="novedades-list" id="novedades-sidebar">
@@ -216,9 +219,21 @@
           <div class="admin-nov-form">
             <input type="text" id="nov-titulo-a" placeholder="Título de la novedad" maxlength="100">
             <textarea id="nov-cuerpo-a" rows="3" placeholder="Texto de la novedad…"></textarea>
+            <label class="nov-file-label">Adjuntar archivo (opcional, máx. 15 MB)
+              <input type="file" id="nov-file-a" class="nov-file">
+            </label>
             <button class="btn-add-nov2" id="btn-add-nov-a" onclick="addNovedad('a')">Publicar novedad</button>
           </div>
           <div id="admin-novedades-list"><div class="admin-list-empty">Sin novedades publicadas.</div></div>
+        </div>
+        <!-- Configuración del portal -->
+        <div class="admin-section">
+          <div class="admin-section-title">Configuración del portal</div>
+          <label class="cfg-toggle">
+            <input type="checkbox" id="cfg-legajos" onchange="toggleLegajos(this.checked)">
+            <span>Mostrar la pestaña <strong>"Legajos autorizados"</strong> a los prestadores</span>
+          </label>
+          <div class="cfg-hint">Admin y auditores la ven siempre. Si la apagás, los prestadores dejan de verla.</div>
         </div>
       </div>
     </div>
