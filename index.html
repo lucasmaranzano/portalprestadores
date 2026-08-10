@@ -90,23 +90,14 @@
 
     <!-- ── PRESENTACIONES ── -->
     <div class="panel active" id="panel-pres">
+      <!-- Aviso Cobertura de Salud (ancho completo) -->
+      <div class="cob-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Los pagos de <strong>COBERTURA DE SALUD</strong> se consultan en la cuenta corriente del
+          <a href="https://borealprestadores.grupoboreal.ar/PortalPrestadores/com.portalpretadores.login" target="_blank" rel="noopener">Portal de Cobertura</a>.</span>
+      </div>
       <!-- Métricas -->
       <div class="metrics">
-        <div class="mc mc-blue">
-          <div class="mc-label">Total presentado</div>
-          <div class="mc-value blue" id="m-pres-total">—</div>
-          <div class="mc-sub" id="m-pres-cant">— facturas</div>
-        </div>
-        <div class="mc mc-green">
-          <div class="mc-label">Total pagado</div>
-          <div class="mc-value green" id="m-pag-total">—</div>
-          <div class="mc-sub" id="m-pag-cant">— facturas pagadas</div>
-        </div>
-        <div class="mc mc-amber">
-          <div class="mc-label">Pendiente de cobro</div>
-          <div class="mc-value amber" id="m-pend-total">—</div>
-          <div class="mc-sub" id="m-pend-cant">— facturas pendientes</div>
-        </div>
         <div class="mc mc-gray">
           <div class="mc-label">Facturas presentadas</div>
           <div class="mc-value" id="m-cant-pres">—</div>
@@ -212,6 +203,7 @@
           <div class="admin-section-title">Prestadores registrados</div>
           <input type="text" class="admin-search" id="admin-search" placeholder="Buscar por nombre o CUIT…" oninput="filtrarPrestadoresDebounced()">
           <div id="admin-prestadores-list"><div class="admin-list-empty">Cargando…</div></div>
+          <div id="admin-prestadores-pager" class="pager"></div>
         </div>
         <!-- Novedades (gestión) -->
         <div class="admin-section">

@@ -258,38 +258,14 @@ function swTab(name, btn) {
 }
 
 // ── MÉTRICAS ──────────────────────────────────────────────
-// Calcula y muestra métricas sobre el subconjunto `rows` de presData,
-// excluyendo siempre las filas de COBERTURA DE SALUD SA (se consultan aparte).
+// Muestra las métricas visibles (facturas presentadas y notas de crédito) sobre
+// el subconjunto `rows`, excluyendo siempre COBERTURA DE SALUD SA (se consulta aparte).
 function calcularMetricasFiltradas(rows) {
   const isCob = r => String(r.os).trim().toUpperCase() === 'COBERTURA DE SALUD SA';
   const contables = rows.filter(r => !isCob(r));
-
-  const totalPresM = contables.reduce((s,r) => s+(parseFloat(r.monto)||0), 0);
-  const cantPres   = contables.length;
-  const cantPag    = contables.filter(r => String(r.estado).toLowerCase()==='pagado').length;
-  const cantPend   = contables.filter(r => String(r.estado).toLowerCase()==='pendiente').length;
-  const cantNC     = contables.filter(r => String(r.estadoOS||'').toUpperCase().includes('NOTA')).length;
-  const totalNCM   = contables
-    .filter(r => String(r.estado).toLowerCase().includes('nota'))
-    .reduce((s,r) => s+(parseFloat(r.monto)||0), 0);
-
-  let totalPagM = 0;
-  if (contables.length > 0) {
-    const nroCompSet = new Set(contables.map(r => String(r.nroComp).trim()).filter(Boolean));
-    totalPagM = pagosData
-      .filter(r => !isCob(r) && (nroCompSet.size === 0 || nroCompSet.has(String(r.nroComp).trim())))
-      .reduce((s,r) => s+(parseFloat(r.impSub)||0), 0);
-  }
-  const totalPendM = totalPresM - totalPagM - totalNCM;
-
-  $('m-pres-total').textContent = fmt(totalPresM);
-  $('m-pres-cant').textContent  = cantPres + ' factura' + (cantPres!==1?'s':'');
-  $('m-pag-total').textContent  = fmt(totalPagM);
-  $('m-pag-cant').textContent   = cantPag + ' factura' + (cantPag!==1?'s':'')+' pagada'+(cantPag!==1?'s':'');
-  $('m-pend-total').textContent = fmt(Math.max(0, totalPendM));
-  $('m-pend-cant').textContent  = cantPend + ' factura' + (cantPend!==1?'s':'')+' pendiente'+(cantPend!==1?'s':'');
-  $('m-cant-pres').textContent  = cantPres;
-  $('m-nc').textContent         = cantNC;
+  const cantNC = contables.filter(r => String(r.estadoOS||'').toUpperCase().includes('NOTA')).length;
+  $('m-cant-pres').textContent = contables.length;
+  $('m-nc').textContent        = cantNC;
 }
 
 function poblarFiltros() {
@@ -914,13 +890,25 @@ async function cargarPrestadores() {
 
 function filtrarPrestadores() {
   const q = $('admin-search').value.toLowerCase();
+  presPage = 1; // toda búsqueda arranca en la primera página
   renderPrestadores(q ? allPrestadores.filter(p => p.nombre.toLowerCase().includes(q) || p.cuit.includes(q)) : allPrestadores);
 }
 
+// ── Paginación de prestadores (admin) ──
+const PRES_PER_PAGE = 10;
+let presPage  = 1;
+let presLista = []; // lista filtrada actual, para navegar entre páginas
+
 function renderPrestadores(lista) {
+  presLista = lista;
   const el = $('admin-prestadores-list');
-  if (!lista.length) { el.innerHTML = '<div class="admin-list-empty">Sin resultados.</div>'; return; }
-  el.innerHTML = lista.map(p => `
+  if (!lista.length) { el.innerHTML = '<div class="admin-list-empty">Sin resultados.</div>'; renderPresPager(1); return; }
+
+  const totalPages = Math.ceil(lista.length / PRES_PER_PAGE);
+  if (presPage > totalPages) presPage = totalPages;
+  const start = (presPage - 1) * PRES_PER_PAGE;
+
+  el.innerHTML = lista.slice(start, start + PRES_PER_PAGE).map(p => `
     <div class="prestador-row">
       <div class="prestador-info">
         <div class="prestador-nombre">${esc(p.nombre)}</div>
@@ -928,6 +916,22 @@ function renderPrestadores(lista) {
       </div>
       <button class="btn-ver" onclick="adminVerPrestador('${esc(p.cuit)}','${esc(p.nombre)}')">Ver datos</button>
     </div>`).join('');
+  renderPresPager(totalPages);
+}
+
+function renderPresPager(totalPages) {
+  const el = $('admin-prestadores-pager');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button class="pager-btn" ${presPage<=1?'disabled':''} onclick="cambiarPagPres(-1)">‹ Anterior</button>
+    <span class="pager-info">Página ${presPage} de ${totalPages}</span>
+    <button class="pager-btn" ${presPage>=totalPages?'disabled':''} onclick="cambiarPagPres(1)">Siguiente ›</button>`;
+}
+
+function cambiarPagPres(delta) {
+  presPage += delta;
+  renderPrestadores(presLista);
 }
 
 async function adminVerPrestador(cuit, nombre) {
