@@ -295,6 +295,7 @@ function auditorSinPrestador() {
 function renderPres() {
   if (auditorSinPrestador()) {
     calcularMetricasFiltradas([]);
+    actualizarBotonZip([]);
     $('tbody-pres').innerHTML = '<tr><td colspan="7" class="no-rows">Seleccioná un prestador para ver sus presentaciones.</td></tr>';
     return;
   }
@@ -317,6 +318,7 @@ function renderPres() {
   );
 
   calcularMetricasFiltradas(rows);
+  actualizarBotonZip(rows);
 
   const tb = $('tbody-pres');
   if (!rows.length) { tb.innerHTML='<tr><td colspan="7" class="no-rows">Sin resultados para los filtros seleccionados</td></tr>'; return; }
@@ -343,6 +345,53 @@ function renderPres() {
       }</td>
     </tr>`;
   }).join('');
+}
+
+// ── Descarga masiva de comprobantes (filtro activo) ───────
+// Tope del backend; se refleja acá para avisar antes de mandar el pedido.
+const ZIP_MAX_FILES = 30;
+let zipNombres = [];
+
+// Guarda los comprobantes descargables del filtro actual y refresca el botón.
+function actualizarBotonZip(rows) {
+  const btn = $('btn-zip');
+  if (!btn) return;
+  zipNombres = [...new Set(rows
+    .filter(r => String(r.estado).toLowerCase() === 'pagado' && String(r.archivo).trim())
+    .map(r => String(r.archivo).trim()))];
+  btn.classList.toggle('hidden', zipNombres.length === 0);
+  btn.textContent = `Descargar comprobantes (${zipNombres.length})`;
+}
+
+async function descargarComprobantes() {
+  const btn = $('btn-zip');
+  if (!zipNombres.length || btn.disabled) return;
+  if (zipNombres.length > ZIP_MAX_FILES) {
+    alert(`Son ${zipNombres.length} comprobantes y el máximo por descarga es ${ZIP_MAX_FILES}.\nAfiná los filtros (por período u obra social) e intentá de nuevo.`);
+    return;
+  }
+
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Preparando ZIP…';
+  try {
+    const res = await gasPost({action:'zip', cuit: viewCuit, t: session.token, nombres: zipNombres});
+    if (!res.ok) { alert(res.error || 'No se pudo generar la descarga.'); return; }
+
+    const bytes = Uint8Array.from(atob(res.data), c => c.charCodeAt(0));
+    const url   = URL.createObjectURL(new Blob([bytes], {type:'application/zip'}));
+    const a     = document.createElement('a');
+    a.href = url; a.download = res.nombre || 'comprobantes.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    if (res.faltantes) alert(`${res.faltantes} comprobante(s) no se encontraron en el archivo y quedaron fuera del ZIP.`);
+  } catch(e) {
+    alert('Error de conexión al preparar la descarga.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 }
 
 function limpiarFiltros() {
