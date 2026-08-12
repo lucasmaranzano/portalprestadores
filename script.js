@@ -350,24 +350,34 @@ function renderPres() {
 // ── Descarga masiva de comprobantes (filtro activo) ───────
 // Tope del backend; se refleja acá para avisar antes de mandar el pedido.
 const ZIP_MAX_FILES = 30;
-let zipNombres = [];
+let zipItems = [];
 
 // Guarda los comprobantes descargables del filtro actual y refresca el botón.
+// Se dedupea por archivo + nro. comprobante, no solo por archivo: un mismo PDF
+// puede pagar varias facturas y tiene que entrar una vez por cada una, con el
+// mismo nombre que tendría bajándolo de a uno.
 function actualizarBotonZip(rows) {
   const btn = $('btn-zip');
   if (!btn) return;
-  zipNombres = [...new Set(rows
-    .filter(r => String(r.estado).toLowerCase() === 'pagado' && String(r.archivo).trim())
-    .map(r => String(r.archivo).trim()))];
-  btn.classList.toggle('hidden', zipNombres.length === 0);
-  btn.textContent = `Descargar comprobantes (${zipNombres.length})`;
+  const vistos = new Set();
+  zipItems = [];
+  for (const r of rows) {
+    if (String(r.estado).toLowerCase() !== 'pagado') continue;
+    const a = String(r.archivo || '').trim();
+    const n = String(r.nroComp || '').trim();
+    if (!a || vistos.has(a + '|' + n)) continue;
+    vistos.add(a + '|' + n);
+    zipItems.push({ a, n });
+  }
+  btn.classList.toggle('hidden', zipItems.length === 0);
+  btn.textContent = `Descargar comprobantes (${zipItems.length})`;
 }
 
 async function descargarComprobantes() {
   const btn = $('btn-zip');
-  if (!zipNombres.length || btn.disabled) return;
-  if (zipNombres.length > ZIP_MAX_FILES) {
-    alert(`Son ${zipNombres.length} comprobantes y el máximo por descarga es ${ZIP_MAX_FILES}.\nAfiná los filtros (por período u obra social) e intentá de nuevo.`);
+  if (!zipItems.length || btn.disabled) return;
+  if (zipItems.length > ZIP_MAX_FILES) {
+    alert(`Son ${zipItems.length} comprobantes y el máximo por descarga es ${ZIP_MAX_FILES}.\nAfiná los filtros (por período u obra social) e intentá de nuevo.`);
     return;
   }
 
@@ -375,7 +385,7 @@ async function descargarComprobantes() {
   btn.disabled = true;
   btn.textContent = 'Preparando ZIP…';
   try {
-    const res = await gasPost({action:'zip', cuit: viewCuit, t: session.token, nombres: zipNombres});
+    const res = await gasPost({action:'zip', cuit: viewCuit, t: session.token, items: zipItems});
     if (!res.ok) { alert(res.error || 'No se pudo generar la descarga.'); return; }
 
     const bytes = Uint8Array.from(atob(res.data), c => c.charCodeAt(0));
